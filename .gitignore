@@ -1,3 +1,5 @@
 /.direnv
 /.envrc
 /.qmlls.ini
+/old
+/shell2.qml

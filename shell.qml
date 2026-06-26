@@ -16,10 +16,10 @@ Scope {
         PanelWindow {
             id: main_win
             screen: modelData
-            readonly property real scale: modelData ? (modelData.height / 1080) : 1
+            readonly property real sc: modelData ? (modelData.height / 1080) : 1
             required property var modelData
 
-            visible: modelData.name === "DP-1"
+            visible: modelData.name === Settings.screen_name
             anchors {
                 top: true
                 left: true
@@ -55,10 +55,10 @@ Scope {
 
             Pill {
                 id: pill
-                scale: main_win.scale
+                sc: main_win.sc
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.topMargin: Consts.top_gap
+                anchors.topMargin: Settings.top_gap
             }
 
         }
@@ -69,8 +69,8 @@ Scope {
         PanelWindow {
             id: res_win
             readonly property real scale: modelData ? (modelData.height / 1080) : 1
-            readonly property real rest_h: Consts.rest_h * scale
-            readonly property int top_gap: Consts.top_gap * scale - 6
+            readonly property real rest_h: Settings.rest_h * scale
+            readonly property int top_gap: Settings.top_gap * scale - 6
             required property var modelData
             screen: modelData
 
