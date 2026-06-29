@@ -1,26 +1,29 @@
+pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Atomic prayer status display.
-// Set `active: true` to start watching the file; false to stop.
-
-Text {
+Singleton {
   id: root
-  property bool active: false
 
-  readonly property bool hasStatus: fileView.text().trim() !== ""
-
-  text: fileView.text().trim()
-  color: Theme.c.black2
-  font.bold: true
-  font.family: Theme.clock_font
-  font.pixelSize: 15
+  property bool active: true
+  property bool has_status: false
+  property string text: ""
 
   FileView {
-    id: fileView
+    id: file_v
     path: "/dev/shm/prayer_status"
     watchChanges: root.active
-    onFileChanged: this.reload()
+    onFileChanged: {
+      file_v.reload();
+    }
+    onLoaded: {
+      let content = file_v.text().trim();
+      root.text = content;
+      root.has_status = content !== "";
+    }
+    Component.onCompleted: {
+      file_v.reload();
+    }
   }
 }

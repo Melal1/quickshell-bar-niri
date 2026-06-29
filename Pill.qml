@@ -1,9 +1,11 @@
 import QtQuick
 import Quickshell
+import Quickshell.Services.SystemTray
 
 Item {
   id: pill
   required property real sc
+  required property var bar_win
   enum Modes {
     Rest,
     Hover,
@@ -23,12 +25,13 @@ Item {
   }
 
   readonly property real target_w: Settings.modes_dim[mode][0] * sc
+
   readonly property real target_h: Settings.modes_dim[mode][1] * sc
 
   width: target_w
   height: target_h
 
-  readonly property real morphCloseness: {
+  readonly property real morph_clossnes: {
     const d = Math.max(Math.abs(width - target_w), Math.abs(height - target_h));
     return 1 - Math.min(1, d / (110 * sc));
 
@@ -61,6 +64,7 @@ Item {
   }
 
   GRect {
+    id:body
     readonly property bool hover_mode : pill.mode === Pill.Modes.Hover
     readonly property bool osd_mode : pill.mode === Pill.Modes.Osd
     anchors.fill: parent
@@ -116,6 +120,7 @@ Item {
       Behavior on anchors.horizontalCenterOffset {
         NumberAnimation { duration: Motion.std; easing.type: Motion.std_ease }
       }
+      color:Theme.c.fg
 
       scale: main.hover_mode ? 2.0 : 1.0
       transformOrigin: Item.Top
@@ -134,7 +139,7 @@ Item {
 
     Item {
 
-      opacity : main.hover_mode ? Math.pow(pill.morphCloseness,1.3) : 0
+      opacity : main.hover_mode ? Math.pow(pill.morph_clossnes,1.3) : 0
       visible: opacity > 0
 
       anchors.verticalCenter: parent.verticalCenter
@@ -197,12 +202,12 @@ Item {
             width: main.media_active ?  implicitWidth : 0
             amp:1.2
             SequentialAnimation on color {
-              loops: Animation.Infinite // Loops forever
+              loops: Animation.Infinite
               running: main.playing
 
               ColorAnimation { to: Theme.c.green2; duration: 3000 }
               ColorAnimation { to: Theme.c.cyan; duration: 3000 }
-              ColorAnimation { to: Theme.c.yellow; duration: 3000 } // Go back to start
+              ColorAnimation { to: Theme.c.yellow; duration: 3000 }
             }
             Behavior on width {
               NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
@@ -229,18 +234,18 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       anchors.verticalCenterOffset: -1
       anchors.left: parent.left
-      anchors.leftMargin: 25 * pill.sc
+      anchors.leftMargin: 22 * pill.sc
       playing: main.playing
       paused: main.paused
       color: Audio.is_muted ?Theme.c.red2 :Theme.c.yellow
-      opacity: main.hover_mode  ? 0 : pill.morphCloseness
+      opacity: main.hover_mode  ? 0 : pill.morph_clossnes
       visible: opacity > 0 && !main.hover_mode && main.media_active
       Behavior on opacity { NumberAnimation { duration: Motion.slow; easing.type:Motion.std_ease  } }
       amp:Audio.volume
+
       SequentialAnimation on color {
         loops: Animation.Infinite
         running: main.playing && !Audio.is_muted
-
         ColorAnimation { to: Theme.c.green2; duration: 3000 }
         ColorAnimation { to: Theme.c.cyan; duration: 3000 }
         ColorAnimation { to: Theme.c.yellow; duration: 3000 }
@@ -273,7 +278,7 @@ Item {
       }
 
       Text {
-        visible: athan.hasStatus
+        visible: AthanStatus.has_status
         text: "|"
         color: Theme.c.black2
         font.bold: true
@@ -281,19 +286,110 @@ Item {
         font.pixelSize: 15
       }
 
-      AthanStatus {
-        id: athan
-        active: main.hover_mode
+      Text {
+        color: Theme.c.black2
+        font.bold: true
+        font.family: Theme.clock_font
+        font.pixelSize: 15
+        text: AthanStatus.text
+
+        Binding {
+          target: AthanStatus
+          property: "active"
+          value: main.hover_mode
+        }
+        ColorPulse {
+          active: PrayersAlert.prayer_upcoming
+          default_color:Theme.c.black2
+          step_duration:1000
+          sequence: [
+          Theme.c.fg,
+          Theme.c.black2
+          ]
+
+        }
+      }
+
+    }
+
+    // ── System Tray (hover mode only)
+
+    GRect {
+      id: tray
+      readonly property int max_w: 0.37 * Settings.hover_w
+      body_color: Theme.c.black
+      top_color: Theme.c.fg
+      bottom_color: Theme.c.black2
+      border_w:3
+      duration:1500
+      running: tray_hover.hovered
+      Rectangle {
+        anchors.centerIn: parent
+        width:tray.width
+        height:tray.height
+        color: tray.body_color
+        radius:tray.radius -2 * pill.sc
+        opacity:!tray_hover.hovered ? 1 :0
+        Behavior on opacity {
+          NumberAnimation { duration:Motion.std }
+        }
+        visible:opacity>0
+
+      }
+
+      implicitWidth: Math.min(systray.implicitWidth + 13 * pill.sc, max_w)
+      implicitHeight: systray.implicitHeight + 7 * pill.sc
+      anchors.right: parent.right
+      anchors.rightMargin: 15 * pill.sc
+      anchors.verticalCenter: parent.verticalCenter
+      opacity: (main.hover_mode &&SystemTray.items.values.length > 0 ) ? Math.pow(pill.morph_clossnes, 1.3) : 0
+      radius: 9 * pill.sc
+      visible: opacity > 0
+      clip: true
+
+      HoverHandler {
+        id: tray_hover
+      }
+      Flickable {
+        anchors.fill: parent
+        anchors.leftMargin: 4 * pill.sc
+
+        contentWidth: systray.implicitWidth
+        contentHeight: parent.height
+        flickableDirection: Flickable.HorizontalFlick
+
+        Tray {
+          id: systray
+          sc: pill.sc
+          bar_win: pill.bar_win
+
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.verticalCenterOffset: -3
+          property bool last_pinned_state
+          onMenu_opened: {
+            last_pinned_state = pinned
+            if(!pinned) {
+              pinned = true
+            }
+          }
+          onMenu_closed: {
+            pinned = last_pinned_state
+            pill._latched = true
+            _grace_timer.restart()
+          }
+        }
       }
     }
   }
+
   // Volume Osd
+
   Loader {
     anchors.fill: parent
     anchors.leftMargin: 30 * pill.sc
     anchors.rightMargin: 15 * pill.sc
     active: pill.mode === Pill.Modes.Osd
-    opacity: pill.mode === Pill.Modes.Osd ? Math.pow(pill.morphCloseness, 1.2) : 0
+    opacity: pill.mode === Pill.Modes.Osd ? Math.pow(pill.morph_clossnes, 1.2) : 0
     sourceComponent: Slider {
       value: Audio.volume
       disabled: Audio.is_muted
@@ -308,7 +404,7 @@ Item {
     id: _grace_timer
     interval: 1000
     onTriggered: {
-      if (pill.morphCloseness < 0.95) {
+      if (pill.morph_clossnes < 0.95) {
         _grace_timer.restart()
         return
       }

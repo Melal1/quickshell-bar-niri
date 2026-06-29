@@ -1,0 +1,343 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Wayland
+import Quickshell.Services.SystemTray
+
+Item {
+  id: tray
+  signal menu_opened()
+  signal menu_closed()
+
+  required property real sc
+  required property var bar_win
+
+  implicitWidth: visible ? row.implicitWidth : 0
+  implicitHeight: 22 * tray.sc
+
+  function show_menu(item, anchor_item) {
+    if (!item.hasMenu)
+    return;
+    card.expanded_idx = -1;
+    opener.menu = item.menu;
+    var p = anchor_item.mapToItem(null, anchor_item.width / 2, 0);
+    menu.anchor_x = p.x;
+    menu.open = true;
+  }
+
+  QsMenuOpener {
+    id: opener
+  }
+
+  RowLayout {
+    id: row
+    anchors.fill: parent
+    spacing: 3 * tray.sc
+
+    Repeater {
+      model: SystemTray.items
+
+      delegate: Item {
+        id: slot
+
+        required property var modelData
+
+        Layout.preferredWidth: 25 * tray.sc
+        Layout.preferredHeight: 25 * tray.sc
+
+        // Rectangle {
+        //   anchors.fill: parent
+        //   radius: 6 * tray.sc
+        //   color: Theme.c.black
+        //   border.width: 1
+        //   border.color: Theme.c.black2
+        //   opacity: area.containsMouse ? 0.8 : 0
+        //   Behavior on opacity { NumberAnimation { duration: Motion.fast } }
+        // }
+
+        Image {
+          anchors.centerIn: parent
+          source: slot.modelData.icon
+          sourceSize.width: 64
+          sourceSize.height: 64
+          width: 16 * tray.sc
+          height: 16 * tray.sc
+          fillMode: Image.PreserveAspectFit
+          smooth: true
+          cache: true
+          asynchronous: true
+        }
+
+        MouseArea {
+          id: area
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+          onClicked: (mouse) => {
+            if (mouse.button === Qt.MiddleButton) {
+              slot.modelData.secondaryActivate();
+            } else if (mouse.button === Qt.RightButton) {
+              tray.show_menu(slot.modelData, slot);
+            } else if (slot.modelData.onlyMenu) {
+              tray.show_menu(slot.modelData, slot);
+            } else {
+              slot.modelData.activate();
+            }
+          }
+          onWheel: (wheel) => {
+            slot.modelData.scroll(wheel.angleDelta.y, false);
+          }
+        }
+      }
+    }
+  }
+
+  component MenuRow: Item {
+    id: mrow
+
+    property var entryData
+    property real indent: 0
+    property bool expanded: false
+    signal activated()
+
+    height: entryData && entryData.isSeparator ? 8 * tray.sc : 30 * tray.sc
+
+    Rectangle {
+      visible: mrow.entryData && mrow.entryData.isSeparator
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.leftMargin: 8 * tray.sc + mrow.indent
+      anchors.rightMargin: 8 * tray.sc
+      height: 1
+      color: Theme.c.black2
+      opacity: 0.4
+    }
+
+    Rectangle {
+      visible: mrow.entryData && !mrow.entryData.isSeparator
+      anchors.fill: parent
+      anchors.leftMargin: mrow.indent
+      radius: 6 * tray.sc
+      color: mrowArea.containsMouse && mrow.entryData && mrow.entryData.enabled
+      ? Theme.c.black : "transparent"
+
+      // accent bar on hover
+      Rectangle {
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: 5 * tray.sc
+        width: 2 * tray.sc
+        height: parent.height * 0.44
+        radius: width / 2
+        color: Theme.c.cyan
+        opacity: mrowArea.containsMouse && mrow.entryData && mrow.entryData.enabled ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Motion.fast } }
+      }
+
+      // checkbox / radio indicator
+      Rectangle {
+        id: state_box
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: 14 * tray.sc
+        readonly property bool is_check: mrow.entryData && mrow.entryData.buttonType === QsMenuButtonType.CheckBox
+        readonly property bool is_radio: mrow.entryData && mrow.entryData.buttonType === QsMenuButtonType.RadioButton
+        readonly property bool present: is_check || is_radio
+        readonly property bool checked: mrow.entryData && mrow.entryData.checkState === Qt.Checked
+        visible: present
+        width: present ? 10 * tray.sc : 0
+        height: 10 * tray.sc
+        radius: is_radio ? width / 2 : 3 * tray.sc
+        color: "transparent"
+        border.width: 1
+        border.color: checked ? Theme.c.cyan : Theme.c.black2
+
+        Rectangle {
+          anchors.centerIn: parent
+          visible: state_box.checked
+          width: 5 * tray.sc
+          height: 5 * tray.sc
+          radius: state_box.is_radio ? width / 2 : 1.5 * tray.sc
+          color: Theme.c.cyan
+        }
+      }
+
+      // entry icon
+      Image {
+        id: entry_icon
+        anchors.left: state_box.right
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: state_box.present ? 6 * tray.sc : 0
+        width: mrow.entryData && mrow.entryData.icon ? 14 * tray.sc : 0
+        height: 14 * tray.sc
+        source: mrow.entryData && mrow.entryData.icon ? mrow.entryData.icon : ""
+        sourceSize.width: 28
+        sourceSize.height: 28
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        cache: true
+        visible: mrow.entryData && mrow.entryData.icon
+      }
+
+      Text {
+        anchors.left: entry_icon.right
+        anchors.leftMargin: mrow.entryData && mrow.entryData.icon ? 8 * tray.sc : 0
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: chevron.visible ? chevron.left : parent.right
+        anchors.rightMargin: 12 * tray.sc
+        text: mrow.entryData && mrow.entryData.text ? mrow.entryData.text : ""
+        color: mrow.entryData && !mrow.entryData.enabled ? Theme.c.black2
+        : (mrowArea.containsMouse ? Theme.c.fg : Theme.c.white)
+        font.pixelSize: 12.5 * tray.sc
+        font.bold: mrowArea.containsMouse
+        elide: Text.ElideRight
+      }
+
+      Text {
+        id: chevron
+        anchors.right: parent.right
+        anchors.rightMargin: 10 * tray.sc
+        anchors.verticalCenter: parent.verticalCenter
+        visible: mrow.entryData && mrow.entryData.hasChildren === true
+        text: mrow.expanded ? "▾" : "▸"
+        color: mrow.expanded ? Theme.c.cyan : Theme.c.black2
+        font.pixelSize: 12 * tray.sc
+      }
+
+      MouseArea {
+        id: mrowArea
+        anchors.fill: parent
+        hoverEnabled: true
+        enabled: mrow.entryData && mrow.entryData.enabled
+        cursorShape: Qt.PointingHandCursor
+        onClicked: mrow.activated()
+      }
+    }
+  }
+
+  PanelWindow {
+    id: menu
+
+    property bool open: false
+    property real anchor_x: 0
+
+    onOpenChanged: {
+      if (open) {
+        tray.menu_opened();
+      } else {
+        card.expanded_idx = -1;
+        opener.menu = null;
+        tray.menu_closed();
+      }
+    }
+
+    screen: tray.bar_win ? tray.bar_win.screen : null
+    visible: open
+    color: "transparent"
+
+    exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.namespace: "pill-tray"
+
+    anchors { top: true; left: true; right: true; bottom: true }
+
+    MouseArea {
+      anchors.fill: parent
+      onClicked: menu.open = false
+    }
+
+    FocusScope {
+      anchors.fill: parent
+      focus: menu.open
+
+      Keys.onEscapePressed: menu.open = false
+
+      GRect {
+        id: card
+        top_color: Theme.c.black
+        bottom_color:Theme.c.black2
+        body_color:Theme.c.bg
+        border_w:3
+
+        x: Math.max(8 * tray.sc, Math.min(
+            menu.anchor_x - width / 2,
+            menu.width - width - 8 * tray.sc))
+        y: 60 * tray.sc
+        width: 210 * tray.sc
+        radius: 10 * tray.sc
+        clip: true
+
+        property int expanded_idx: -1
+
+        implicitHeight: col.implicitHeight + 12 * tray.sc
+        height: implicitHeight
+
+        MouseArea { anchors.fill: parent }
+
+        Column {
+          id: col
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.top: parent.top
+          anchors.margins: 6 * tray.sc
+          spacing: 0
+
+          Repeater {
+            model: opener.children ? opener.children.values : []
+
+            delegate: Column {
+              id: entry
+
+              required property var modelData
+              required property int index
+              readonly property bool expanded: card.expanded_idx === index
+
+              width: col.width
+
+              MenuRow {
+                width: parent.width
+                entryData: entry.modelData
+                expanded: entry.expanded
+                onActivated: {
+                  if (entry.modelData.hasChildren) {
+                    card.expanded_idx = entry.expanded ? -1 : entry.index;
+                  } else {
+                    entry.modelData.triggered();
+                    menu.open = false;
+                  }
+                }
+              }
+
+              QsMenuOpener {
+                id: child_open
+                menu: entry.expanded ? entry.modelData : null
+              }
+
+              Repeater {
+                model: child_open.children ? child_open.children.values : []
+
+                delegate: MenuRow {
+                  required property var modelData
+                  width: entry.width
+                  indent: 12 * tray.sc
+                  entryData: modelData
+                  onActivated: {
+                    if (!modelData.hasChildren) { // because menu trees can theoretically go multiple levels deep
+                      modelData.triggered();
+                      menu.open = false;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
