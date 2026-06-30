@@ -20,6 +20,7 @@ Singleton {
     let playing_non_mpd = null;
     let playing_mpd = null;
     let first_non_mpd = null;
+    let first_mpd = null;
 
     for (let i = 0; i < players.length; i++) {
       let p = players[i];
@@ -27,6 +28,7 @@ Singleton {
       let is_playing = p.playbackState === MprisPlaybackState.Playing;
 
       if (is_mpd) {
+        if (!first_mpd) first_mpd = p;
         if (is_playing && !playing_mpd) playing_mpd = p;
       } else {
         if (!first_non_mpd) first_non_mpd = p;
@@ -43,8 +45,9 @@ Singleton {
     // If we reach this line, NOTHING is playing, simply return the first non-mpd player found.
     if (first_non_mpd) return first_non_mpd;
 
-    // 3. "If there was only mpd and nothing is playing to return null"
-    // If we reach this line, there are no non-mpd players, and mpd is not playing.
+    // 3. Optional: ignore mpd-mpris if it's there and paused.
+    if (!Settings.ignore_paused_mpd && first_mpd) return first_mpd;
+
     return null;
   }
 

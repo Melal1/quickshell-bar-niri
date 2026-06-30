@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.SystemTray
-
+import "PillComponent"
 Item {
   id: pill
   required property real sc
@@ -52,7 +52,11 @@ Item {
     }
   }
 
-  TapHandler { onTapped: pill.pinned = !pill.pinned }
+  MouseArea {
+    anchors.fill: parent
+    onClicked: pill.pinned = !pill.pinned
+    z: -1 // Put it below other clickable items
+  }
 
   onHoveringChanged: {
     if (hovering) {
@@ -75,7 +79,7 @@ Item {
     body_color: Theme.c.bg
     top_color: Theme.c.bg
     bottom_color: Theme.c.black2
-    border_w: hover_mode  ? 3 : osd_mode ? 2 : 1
+    border_w: hover_mode  ? 1.8 * pill.sc : osd_mode ? 1.2 * pill.sc : 1
     running: hover_mode || osd_mode
   }
 
@@ -90,18 +94,8 @@ Item {
     readonly property bool playing : Player.status === Player.Modes.Playing
     readonly property bool paused :Player.status === Player.Modes.Paused
 
-    property bool _hide_paused: false
-    readonly property bool media_active: (playing || paused) && !_hide_paused
-
-    onPausedChanged: {
-      if (paused) {
-        _media_paused_timer.restart()
-      } else {
-        _media_paused_timer.stop()
-        _hide_paused = false
-      }
-    }
-
+    readonly property bool media_active: built_in_media.media_active
+    property bool last_pinned_state: false
     opacity: hover_mode || pill.mode === Pill.Modes.Rest ? 1 : 0
 
     Behavior on opacity {
@@ -137,111 +131,33 @@ Item {
       }
     }
 
-    Item {
-
-      opacity : main.hover_mode ? Math.pow(pill.morph_clossnes,1.3) : 0
+    BuiltInMedia {
+      id: built_in_media
+      anchors.fill: parent
+      sc: pill.sc
+      playing: main.playing
+      paused: main.paused
+      opacity: main.hover_mode ? Math.pow(pill.morph_clossnes, 1.3) : 0
       visible: opacity > 0
-
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.verticalCenterOffset: -1
-      anchors.left: parent.left
-      Image {
-        id: cover
-        anchors.verticalCenter: parent.verticalCenter
-        height: Settings.hover_h * pill.sc * 0.55
-        width: height
-        readonly property string unk: "./Assests/UnkownTrack.jpg"
-        anchors.left: parent.left
-        anchors.leftMargin: 15 * pill.sc
-        source: Player.player ? Player.player.desktopEntry === "mpd-mpris" ||Player.player.trackArtUrl === ""  ? unk : Player.player.
-        trackArtUrl : unk
-        fillMode: Image.PreserveAspectCrop
-      }
-
-      Rectangle {
-        anchors.centerIn:cover
-        width:cover.width +10;
-        height: cover.width + 10
-        color:"transparent"
-        border.width: 5
-        border.color:Theme.c.bg
-        radius: width / 4
-
-      }
-
-      Column {
-        id:info
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: cover.right
-        anchors.leftMargin: 10
-        anchors.verticalCenterOffset: 6
-        width: 180
-
-        Text {
-          id:title
-          text: Player.player ? Player.player.trackTitle !== "" ? Player.player.trackTitle :
-          "No Title" : "Nothing Here"
-          font.bold:true
-          color: Theme.c.fg
-          font.pixelSize: 16
-          elide: Text.ElideRight
-          width: parent.width
-
-        }
-
-        Row {
-          spacing: 1
-          Visullizer {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -5
-            playing: main.playing
-            paused: main.paused
-            scale:0.6
-            color: Audio.is_muted ?Theme.c.red2 :Theme.c.yellow
-            clip: true
-            width: main.media_active ?  implicitWidth : 0
-            amp:1.2
-            SequentialAnimation on color {
-              loops: Animation.Infinite
-              running: main.playing
-
-              ColorAnimation { to: Theme.c.green2; duration: 3000 }
-              ColorAnimation { to: Theme.c.cyan; duration: 3000 }
-              ColorAnimation { to: Theme.c.yellow; duration: 3000 }
-            }
-            Behavior on width {
-              NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-            }
-
-          }
-
-          Text {
-            text: Player.player ? Player.player.trackArtist !== "" ? Player.player.trackArtist : "" : "but chickens"
-            font.pixelSize: 13
-            font.bold: true
-            color: Theme.c.black2
-            elide: Text.ElideRight
-            width: 110
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -3
-          }
-        }
-      }
     }
 
     Visullizer {
-      id : vis
+      id: vis
       anchors.verticalCenter: parent.verticalCenter
       anchors.verticalCenterOffset: -1
       anchors.left: parent.left
       anchors.leftMargin: 22 * pill.sc
       playing: main.playing
       paused: main.paused
-      color: Audio.is_muted ?Theme.c.red2 :Theme.c.yellow
-      opacity: main.hover_mode  ? 0 : pill.morph_clossnes
+      color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
+      opacity: main.hover_mode ? 0 : pill.morph_clossnes
       visible: opacity > 0 && !main.hover_mode && main.media_active
-      Behavior on opacity { NumberAnimation { duration: Motion.slow; easing.type:Motion.std_ease  } }
-      amp:Audio.volume
+      
+      Behavior on opacity { 
+        NumberAnimation { duration: Motion.slow; easing.type: Motion.std_ease } 
+      }
+      
+      amp: Audio.volume
 
       SequentialAnimation on color {
         loops: Animation.Infinite
@@ -274,7 +190,7 @@ Item {
         color: Theme.c.black2
         font.bold: true
         font.family: Theme.clock_font
-        font.pixelSize: 15
+        font.pixelSize: Math.round(9 * pill.sc)
       }
 
       Text {
@@ -283,14 +199,14 @@ Item {
         color: Theme.c.black2
         font.bold: true
         font.family: Theme.clock_font
-        font.pixelSize: 15
+        font.pixelSize: Math.round(9 * pill.sc)
       }
 
       Text {
         color: Theme.c.black2
         font.bold: true
         font.family: Theme.clock_font
-        font.pixelSize: 15
+        font.pixelSize: Math.round(9 * pill.sc)
         text: AthanStatus.text
 
         Binding {
@@ -313,71 +229,23 @@ Item {
     }
 
     // ── System Tray (hover mode only)
-
-    GRect {
-      id: tray
-      readonly property int max_w: 0.37 * Settings.hover_w
-      body_color: Theme.c.black
-      top_color: Theme.c.fg
-      bottom_color: Theme.c.black2
-      border_w:3
-      duration:1500
-      running: tray_hover.hovered
-      Rectangle {
-        anchors.centerIn: parent
-        width:tray.width
-        height:tray.height
-        color: tray.body_color
-        radius:tray.radius -2 * pill.sc
-        opacity:!tray_hover.hovered ? 1 :0
-        Behavior on opacity {
-          NumberAnimation { duration:Motion.std }
-        }
-        visible:opacity>0
-
-      }
-
-      implicitWidth: Math.min(systray.implicitWidth + 13 * pill.sc, max_w)
-      implicitHeight: systray.implicitHeight + 7 * pill.sc
-      anchors.right: parent.right
-      anchors.rightMargin: 15 * pill.sc
-      anchors.verticalCenter: parent.verticalCenter
-      opacity: (main.hover_mode &&SystemTray.items.values.length > 0 ) ? Math.pow(pill.morph_clossnes, 1.3) : 0
-      radius: 9 * pill.sc
+    BuiltInTray {
+      anchors.fill: parent
+      sc: pill.sc
+      bar_win: pill.bar_win
+      opacity: (main.hover_mode && SystemTray.items.values.length > 0) ? Math.pow(pill.morph_clossnes, 1.3) : 0
       visible: opacity > 0
-      clip: true
 
-      HoverHandler {
-        id: tray_hover
-      }
-      Flickable {
-        anchors.fill: parent
-        anchors.leftMargin: 4 * pill.sc
-
-        contentWidth: systray.implicitWidth
-        contentHeight: parent.height
-        flickableDirection: Flickable.HorizontalFlick
-
-        Tray {
-          id: systray
-          sc: pill.sc
-          bar_win: pill.bar_win
-
-          anchors.verticalCenter: parent.verticalCenter
-          anchors.verticalCenterOffset: -3
-          property bool last_pinned_state
-          onMenu_opened: {
-            last_pinned_state = pinned
-            if(!pinned) {
-              pinned = true
-            }
-          }
-          onMenu_closed: {
-            pinned = last_pinned_state
-            pill._latched = true
-            _grace_timer.restart()
-          }
+      onInteractionStarted: {
+        main.last_pinned_state = pill.pinned
+        if (!pill.pinned) {
+          pill.pinned = true
         }
+      }
+      onInteractionEnded: {
+        pill.pinned = main.last_pinned_state
+        pill._latched = true
+        _grace_timer.restart()
       }
     }
   }
@@ -416,11 +284,6 @@ Item {
     id: _osd_timer
     interval: 1500
     onTriggered: pill.osd = false
-  }
-  Timer {
-    id: _media_paused_timer
-    interval: 10000
-    onTriggered: main._hide_paused = true
   }
 
   Connections {

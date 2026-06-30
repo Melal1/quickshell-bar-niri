@@ -5,6 +5,8 @@ Singleton {
   property bool time12h: true
   property bool clock_sec: false
   property string screen_name: "DP-1"
+  property bool ignore_paused_mpd: false
+  property bool ignore_mpd_mpris_art: false
   readonly property int rest_w: 130
   readonly property int rest_h: 36
   property int hover_w: 500
@@ -16,7 +18,6 @@ Singleton {
   readonly property int less_round_rad: 25
   readonly property string prayer_t_path: "/.cache/salawat/athan_cache1.json"
   readonly property int prayer_alert_before: 10
-
 
   enum Modes {
     Rest,
