@@ -154,15 +154,18 @@ Item {
           spacing: 14* root.sc
 
           Text {
+            readonly property bool active: (Player.player && Player.player.canGoPrevious)
             text: "󰒮"
             font.family: "Agave Nerd Font Propo"
             font.pixelSize: Math.round(16.80 * root.sc)
-            color: (Player.player && Player.player.canGoPrevious) ? Theme.c.fg : Theme.c.black2
+            color: active ? Theme.c.fg : Theme.c.black2
             MouseArea {
               anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
+              cursorShape:parent.active ?Qt.PointingHandCursor : Qt.ArrowCursor
+              enabled:parent.active
+
               onClicked: {
-                if (Player.player && Player.player.canGoPrevious) Player.player.previous()
+                if (parent.active) Player.player.previous()
               }
             }
           }
@@ -175,37 +178,41 @@ Item {
             anchors.verticalCenterOffset: -1.80 * root.sc
 
             Text {
+              readonly property bool active : Player.player  && (Player.player.canPlay || Player.player.canPause || Player.player.canTogglePlaying)
               id: play_text
               text: root.playing ? "󰏤" : "󰐊"
               anchors.centerIn: parent
               anchors.verticalCenterOffset: -0.20 * root.sc
               font.family: "Agave Nerd Font Propo"
               font.pixelSize: Math.round(19.20 * root.sc)
-              color: (Player.player && (Player.player.canPlay || Player.player.canPause || Player.player.canTogglePlaying)) ? Theme.c.fg : Theme.c.black2
-              MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                  if (Player.player && Player.player.canTogglePlaying) {
-                    Player.player.togglePlaying()
-                  } else if (Player.player) {
-                    if (root.playing && Player.player.canPause) Player.player.pause()
-                    else if (!root.playing && Player.player.canPlay) Player.player.play()
-                  }
+              color:  active ? Theme.c.fg : Theme.c.black2
+            }
+            MouseArea {
+              anchors.fill: parent
+              enabled: play_text.active
+              cursorShape: play_text.active ? Qt.PointingHandCursor : Qt.ArrowCursor
+              onClicked: {
+                if (play_text.active) {
+                  Player.player.togglePlaying()
+                } else if (Player.player) {
+                  if (root.playing && Player.player.canPause) Player.player.pause()
+                  else if (!root.playing && Player.player.canPlay) Player.player.play()
                 }
               }
             }
           }
           Text {
+            readonly property bool active :(Player.player && Player.player.canGoNext)
             text: "󰒭"
             font.family: "Agave Nerd Font Propo"
             font.pixelSize: Math.round(16.80 * root.sc)
-            color: (Player.player && Player.player.canGoNext) ? Theme.c.fg : Theme.c.black2
+            color: active  ? Theme.c.fg : Theme.c.black2
             MouseArea {
               anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
+              enabled:parent.active
+              cursorShape: parent.active ? Qt.PointingHandCursor : Qt.ArrowCursor
               onClicked: {
-                if (Player.player && Player.player.canGoNext) Player.player.next()
+                if (parent.active) Player.player.next()
               }
             }
           }
