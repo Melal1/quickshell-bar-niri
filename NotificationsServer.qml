@@ -92,7 +92,18 @@ Singleton {
   }
 
   function add_popup(notif) {
+    if (root.popups.length >= 3) {
+      root.popups[0].expire();
+    }
     root.popups = root.popups.concat([notif]).slice(-3);
+  }
+
+  function remove_popup(notif) {
+    if (!notif || !notif.id) return;
+
+    root.popups = root.popups.filter(p => p.id !== notif.id);
+
+    notif.expire();
   }
 
   NotificationServer {

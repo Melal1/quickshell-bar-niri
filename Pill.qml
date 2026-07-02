@@ -152,11 +152,11 @@ Item {
       color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
       opacity: main.hover_mode ? 0 : pill.morph_clossnes
       visible: opacity > 0 && !main.hover_mode && main.media_active
-      
-      Behavior on opacity { 
-        NumberAnimation { duration: Motion.slow; easing.type: Motion.std_ease } 
+
+      Behavior on opacity {
+        NumberAnimation { duration: Motion.slow; easing.type: Motion.std_ease }
       }
-      
+
       amp: Audio.volume
 
       SequentialAnimation on color {

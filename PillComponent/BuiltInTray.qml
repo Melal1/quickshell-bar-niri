@@ -21,6 +21,13 @@ Item {
     border_w: 3
     duration: 1500
     running: tray_hover.hovered
+    Behavior on implicitWidth {
+      NumberAnimation {
+        duration:Motion.fast
+        easing.type: Motion.std_ease
+      }
+
+    }
 
     Rectangle {
       anchors.centerIn: parent
@@ -33,6 +40,12 @@ Item {
         NumberAnimation { duration: Motion.std }
       }
       visible: opacity > 0
+      Behavior on implicitWidth {
+        NumberAnimation {
+          duration:Motion.std
+        }
+
+      }
     }
 
     implicitWidth: Math.min(systray.implicitWidth + 13 * root.sc, max_w)
@@ -62,11 +75,11 @@ Item {
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -3
-        
+
         onMenu_opened: {
           root.interactionStarted()
         }
-        
+
         onMenu_closed: {
           root.interactionEnded()
         }
