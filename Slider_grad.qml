@@ -19,9 +19,9 @@ Item {
   property color disabled_overdrive_col: "#272727"
 
   property string icon: ""
-  property real _animValue: value
+  property real _anim_value: value
 
-  Behavior on _animValue {
+  Behavior on _anim_value {
     SmoothedAnimation {
       velocity: 2.5
       duration: 250
@@ -38,7 +38,7 @@ Item {
     font.bold: true
     font.family: "Liberation Sans"
     font.pixelSize: 16
-    text: disabled ?"off":Math.round(root._animValue * 100) + "%"
+    text: disabled ?"off":Math.round(root._anim_value * 100) + "%"
   }
 
   Text {
@@ -68,13 +68,13 @@ Item {
     Rectangle {
       radius: parent.radius
       anchors { bottom: parent.bottom; left: parent.left; top: parent.top }
-      width: root._animValue > 1 ? parent.width : Math.min(parent.width, parent.width * root._animValue)
+      width: root._anim_value > 1 ? parent.width : Math.min(parent.width, parent.width * root._anim_value)
 
       gradient: Gradient {
         orientation: Gradient.Horizontal
         GradientStop { position: 0.0; color: root.disabled ? root.muted_col : root.active_col }
         GradientStop {
-          id: mainSlosh
+          id: main_slosh
           position: 0.5
           // Uses your new custom secondary color!
           color: root.disabled ? root.muted_col : root.active_secondary_col
@@ -85,21 +85,21 @@ Item {
       SequentialAnimation {
         running: !root.disabled
         loops: Animation.Infinite
-        NumberAnimation { target: mainSlosh; property: "position"; to: 0.0; duration: 2000; easing.type: Easing.InOutSine }
-        NumberAnimation { target: mainSlosh; property: "position"; to: 1.0; duration: 2000; easing.type: Easing.InOutSine }
+        NumberAnimation { target: main_slosh; property: "position"; to: 0.0; duration: 2000; easing.type: Easing.InOutSine }
+        NumberAnimation { target: main_slosh; property: "position"; to: 1.0; duration: 2000; easing.type: Easing.InOutSine }
       }
     }
 
     Rectangle {
       radius: base.radius
       anchors { bottom: base.bottom; left: base.left; top: base.top }
-      width: root._animValue < 1 ? 0 : Math.min(base.width, base.width * (root._animValue - 1))
+      width: root._anim_value < 1 ? 0 : Math.min(base.width, base.width * (root._anim_value - 1))
 
       gradient: Gradient {
         orientation: Gradient.Horizontal
         GradientStop { position: 0.0; color: root.disabled ? root.disabled_overdrive_col : root.overdride_col }
         GradientStop {
-          id: redSlosh
+          id: red_slosh
           position: 0.5
           // Uses your new custom secondary overdrive color!
           color: root.disabled ? root.disabled_overdrive_col : root.overdrive_secondary_col
@@ -108,10 +108,10 @@ Item {
       }
 
       SequentialAnimation {
-        running: !root.disabled && root._animValue > 1
+        running: !root.disabled && root._anim_value > 1
         loops: Animation.Infinite
-        NumberAnimation { target: redSlosh; property: "position"; to: 0.0; duration: 1200; easing.type: Easing.InOutSine }
-        NumberAnimation { target: redSlosh; property: "position"; to: 1.0; duration: 1200; easing.type: Easing.InOutSine }
+        NumberAnimation { target: red_slosh; property: "position"; to: 0.0; duration: 1200; easing.type: Easing.InOutSine }
+        NumberAnimation { target: red_slosh; property: "position"; to: 1.0; duration: 1200; easing.type: Easing.InOutSine }
       }
     }
   }

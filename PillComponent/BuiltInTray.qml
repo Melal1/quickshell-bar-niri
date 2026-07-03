@@ -9,8 +9,13 @@ Item {
   required property real sc
   required property var bar_win
 
-  signal interactionStarted()
-  signal interactionEnded()
+  signal interaction_started()
+  signal interaction_ended()
+  readonly property bool has_items: SystemTray.items.values.length > 0
+  visible: has_items
+
+  implicitWidth: tray.implicitWidth
+  implicitHeight: tray.implicitHeight
 
   GRect {
     id: tray
@@ -50,9 +55,7 @@ Item {
 
     implicitWidth: Math.min(systray.implicitWidth + 13 * root.sc, max_w)
     implicitHeight: systray.implicitHeight + 7 * root.sc
-    anchors.right: parent.right
-    anchors.rightMargin: 15 * root.sc
-    anchors.verticalCenter: parent.verticalCenter
+    anchors.fill: parent
     radius: 9 * root.sc
     clip: true
 
@@ -77,11 +80,11 @@ Item {
         anchors.verticalCenterOffset: -3
 
         onMenu_opened: {
-          root.interactionStarted()
+          root.interaction_started()
         }
 
         onMenu_closed: {
-          root.interactionEnded()
+          root.interaction_ended()
         }
       }
     }

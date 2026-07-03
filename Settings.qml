@@ -18,16 +18,8 @@ Singleton {
   readonly property int less_round_rad: 25
   readonly property string prayer_t_path: "/.cache/salawat/athan_cache1.json"
   readonly property int prayer_alert_before: 10
+  readonly property int popup_w : 400
+  readonly property int notifcenter_w: 400
+  readonly property int notifcenter_h: 500
 
-  enum Modes {
-    Rest,
-    Hover,
-    Osd
-  }
-
-  property var modes_dim: ({
-      [Settings.Modes.Rest]: [rest_w, rest_h],
-      [Settings.Modes.Hover]: [hover_w, hover_h],
-      [Settings.Modes.Osd]: [osd_w, osd_h]
-  })
 }

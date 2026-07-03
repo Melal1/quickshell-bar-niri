@@ -16,11 +16,11 @@ Row {
       color: visualizer.color
       radius: 1.5
       anchors.bottom: parent.bottom
-      property real animOffset: 0
+      property real anim_offset: 0
 
       height: {
         if (playing)
-        { return 3 + animOffset; }
+        { return 3 + anim_offset; }
         if(paused) return 3;
         return 0;
       }
@@ -32,7 +32,7 @@ Row {
         running: playing
         repeat: true
         onTriggered: {
-          bar.animOffset = Math.random() * 13 * amp
+          bar.anim_offset = Math.random() * 13 * amp
         }
       }
     }

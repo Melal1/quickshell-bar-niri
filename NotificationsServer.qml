@@ -12,7 +12,16 @@ Singleton {
 
   property var history: []
   property bool dnd: false
+  property bool suppress_popups: false
   property var popups: []
+  property var seen_ids: ({})
+
+  readonly property int unread: {
+    var u = 0;
+    for (var i = 0; i < history.length; i++)
+      if (!seen_ids[history[i].id]) u++;
+    return u;
+  }
 
   function icon_for(n) {
     if (!n) return "";
@@ -53,7 +62,7 @@ Singleton {
           urgency: notif.urgency,
           ts: Date.now(),
           id: notif.id
-        }].concat(root.history).slice(0, 50);
+        }].concat(root.history).slice(0, 100);
     });
   }
 
@@ -106,23 +115,43 @@ Singleton {
     notif.expire();
   }
 
+  function mark_all_seen() {
+    var m = {};
+    for (var i = 0; i < history.length; i++) m[history[i].id] = true;
+    root.seen_ids = m;
+  }
+
+  function clear_all() {
+    root.history = [];
+    root.popups = [];
+    root.seen_ids = ({});
+  }
+
   NotificationServer {
     id: server
+    keepOnReload: true
+    bodySupported: true
+    actionsSupported: true
+    imageSupported: true
+    inlineReplySupported: true
 
     onNotification: new_notif => {
       // TODO: Exclude some notifs
       new_notif.tracked = true;
 
-      hook_closed(new_notif);
-
       let is_crit = new_notif.urgency === NotificationUrgency.Critical;
-      if (!dnd || is_crit) {
+      let skip_popup = dnd || suppress_popups;
+      if (!skip_popup || is_crit) {
+        hook_closed(new_notif);
         add_popup(new_notif);
         return;
       }
 
-      // If DND is on and not critical route it straight into history
-      new_notif.expire();
+      // DND active & not critical — defer expire() so the closed signal
+      // has a chance to fire (synchronous expire() destroys the object instantly), this is my guess not the real reason
+      // I tried alot of ways and this seem to work the best
+      hook_closed(new_notif);
+      Qt.callLater(function() { new_notif.expire(); });
     }
   }
 }

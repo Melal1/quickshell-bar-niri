@@ -9,29 +9,74 @@ Item {
   enum Modes {
     Rest,
     Hover,
-    Osd
+    Osd,
+    NotifPopup
   }
+
+  enum Surfaces {
+    None,
+    NotifCenter
+  }
+
+  property int active_surface: Pill.Surfaces.None
+  readonly property bool notif_center_open: active_surface === Pill.Surfaces.NotifCenter
+  readonly property bool is_surface: active_surface !== Pill.Surfaces.None
+
+  function toggle_surface(s) {
+    if (active_surface === s) {
+      active_surface = Pill.Surfaces.None;
+    } else {
+      active_surface = s;
+    }
+  }
+
+  property bool exiting_surface: false
+  onIs_surfaceChanged: {
+    if (!is_surface) {
+      exiting_surface = true;
+    }
+  }
+  onMorph_closenessChanged: {
+    if (morph_closeness > 0.95 && exiting_surface) {
+      exiting_surface = false;
+    }
+  }
+
+  property bool suppress_hover: false
+
+  property var modes_dim: ({
+      [Pill.Modes.Rest]: [Settings.rest_w, Settings.rest_h,Settings.round_rad],
+      [Pill.Modes.Hover]: [Settings.hover_w, Settings.hover_h,Settings.round_rad - 20 ],
+      [Pill.Modes.Osd]: [Settings.osd_w, Settings.osd_h,Settings.round_rad],
+      [Pill.Modes.NotifPopup]: [Settings.popup_w, pop_loader.item ? pop_loader.item.implicitHeight + 15 * sc : Settings.rest_h,Settings.round_rad - 20 ]
+  })
+
+  property var surface_dim: ({
+      [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20]
+  })
 
   property bool hovering: false
   property bool pinned: false
   property bool osd: false
+  property bool popup: NotificationsServer.popups.length > 0
   property bool _latched: false
-  readonly property bool expanded: hovering || _latched || pinned
+  readonly property bool expanded: (hovering && !suppress_hover) || _latched || pinned
 
   readonly property int mode: {
+    if (popup) return Pill.Modes.NotifPopup
     if (osd && !pinned) return Pill.Modes.Osd
     if (expanded) return Pill.Modes.Hover
     return Pill.Modes.Rest
   }
 
-  readonly property real target_w: Settings.modes_dim[mode][0] * sc
-
-  readonly property real target_h: Settings.modes_dim[mode][1] * sc
+  readonly property var active_dim: (is_surface && !popup) ? surface_dim[active_surface] : modes_dim[mode]
+  readonly property real target_w: active_dim[0] * sc
+  readonly property real target_h: active_dim[1] * sc
 
   width: target_w
   height: target_h
 
-  readonly property real morph_clossnes: {
+  readonly property real morph_closeness: {
     const d = Math.max(Math.abs(width - target_w), Math.abs(height - target_h));
     return 1 - Math.min(1, d / (110 * sc));
 
@@ -41,21 +86,24 @@ Item {
     NumberAnimation {
       duration: Motion.morph
       easing.type: Motion.custom
-      easing.bezierCurve: Motion.morphCurve
+      easing.bezierCurve: Motion.morph_curve
     }
   }
   Behavior on height {
     NumberAnimation {
       duration: Motion.morph
       easing.type: Motion.custom
-      easing.bezierCurve: Motion.morphCurve
+      easing.bezierCurve: Motion.morph_curve
     }
   }
 
   MouseArea {
     anchors.fill: parent
-    onClicked: pill.pinned = !pill.pinned
-    z: -1 // Put it below other clickable items
+    onClicked: {
+      if (is_surface) active_surface = Pill.Surfaces.None;
+      else pill.pinned = !pill.pinned;
+    }
+    z: -1
   }
 
   onHoveringChanged: {
@@ -72,7 +120,7 @@ Item {
     readonly property bool hover_mode : pill.mode === Pill.Modes.Hover
     readonly property bool osd_mode : pill.mode === Pill.Modes.Osd
     anchors.fill: parent
-    radius: hover_mode ? ( Settings.round_rad - 20 )* sc : Settings.round_rad * sc
+    radius: pill.modes_dim[pill.mode][2] * pill.sc
     Behavior on radius {
       NumberAnimation { duration: Motion.std}
     }
@@ -96,7 +144,7 @@ Item {
 
     readonly property bool media_active: built_in_media.media_active
     property bool last_pinned_state: false
-    opacity: hover_mode || pill.mode === Pill.Modes.Rest ? 1 : 0
+    opacity: (hover_mode || pill.mode === Pill.Modes.Rest) && !is_surface ? (pill.exiting_surface ? Math.pow(pill.morph_closeness, 1.3) : 1) : 0
 
     Behavior on opacity {
       NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
@@ -107,8 +155,8 @@ Item {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.top: parent.top
 
-      readonly property real restSize: Settings.rest_h * pill.sc
-      anchors.topMargin: (restSize + (main.hover_mode ? restSize * 0.2 : 0) - height) / 2
+      readonly property real rest_size: Settings.rest_h * pill.sc
+      anchors.topMargin: (rest_size + (main.hover_mode ? rest_size * 0.2 : 0) - height) / 2
       anchors.horizontalCenterOffset: main.media_active && !main.hover_mode ? 7 * pill.sc : 0
 
       Behavior on anchors.horizontalCenterOffset {
@@ -123,7 +171,7 @@ Item {
         NumberAnimation {
           duration: Motion.morph
           easing.type: Motion.custom
-          easing.bezierCurve: Motion.morphCurve
+          easing.bezierCurve: Motion.morph_curve
         }
       }
       Behavior on anchors.topMargin {
@@ -137,7 +185,7 @@ Item {
       sc: pill.sc
       playing: main.playing
       paused: main.paused
-      opacity: main.hover_mode ? Math.pow(pill.morph_clossnes, 1.3) : 0
+      opacity: main.hover_mode ? Math.pow(pill.morph_closeness, 1.3) : 0
       visible: opacity > 0
     }
 
@@ -150,7 +198,7 @@ Item {
       playing: main.playing
       paused: main.paused
       color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
-      opacity: main.hover_mode ? 0 : pill.morph_clossnes
+      opacity: main.hover_mode ? 0 : pill.morph_closeness
       visible: opacity > 0 && !main.hover_mode && main.media_active
 
       Behavior on opacity {
@@ -228,36 +276,51 @@ Item {
 
     }
 
-    // ── System Tray (hover mode only)
-    BuiltInTray {
-      anchors.fill: parent
-      sc: pill.sc
-      bar_win: pill.bar_win
-      opacity: (main.hover_mode && SystemTray.items.values.length > 0) ? Math.pow(pill.morph_clossnes, 1.3) : 0
+    // ── System Tray and Notif Btn (hover mode only)
+    Row {
+      anchors.right: parent.right
+      anchors.rightMargin: 15 * pill.sc
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: 1 * pill.sc
+      layoutDirection: Qt.RightToLeft
+
+      opacity: main.hover_mode ? (pill.exiting_surface ? Math.pow(pill.morph_closeness, 1.3) : 1) : 0
       visible: opacity > 0
 
-      onInteractionStarted: {
-        main.last_pinned_state = pill.pinned
-        if (!pill.pinned) {
-          pill.pinned = true
+      BuiltInTray {
+        id: built_in_tray
+        anchors.verticalCenter: parent.verticalCenter
+        sc: pill.sc
+        bar_win: pill.bar_win
+
+        onInteraction_started: {
+          main.last_pinned_state = pill.pinned
+          if (!pill.pinned) {
+            pill.pinned = true
+          }
+        }
+        onInteraction_ended: {
+          pill.pinned = main.last_pinned_state
+          pill._latched = true
+          _grace_timer.restart()
         }
       }
-      onInteractionEnded: {
-        pill.pinned = main.last_pinned_state
-        pill._latched = true
-        _grace_timer.restart()
+
+      NotifButton {
+        id: notif_btn
+        sc: pill.sc
+        onLeftClicked: pill.toggle_surface(Pill.Surfaces.NotifCenter)
       }
     }
   }
 
   // Volume Osd
-
   Loader {
     anchors.fill: parent
     anchors.leftMargin: 30 * pill.sc
     anchors.rightMargin: 15 * pill.sc
     active: pill.mode === Pill.Modes.Osd
-    opacity: pill.mode === Pill.Modes.Osd ? Math.pow(pill.morph_clossnes, 1.2) : 0
+    opacity: pill.mode === Pill.Modes.Osd ? Math.pow(pill.morph_closeness, 1.2) : 0
     sourceComponent: Slider {
       value: Audio.volume
       disabled: Audio.is_muted
@@ -272,7 +335,7 @@ Item {
     id: _grace_timer
     interval: 1000
     onTriggered: {
-      if (pill.morph_clossnes < 0.95) {
+      if (pill.morph_closeness < 0.95) {
         _grace_timer.restart()
         return
       }
@@ -286,16 +349,91 @@ Item {
     onTriggered: pill.osd = false
   }
 
-  Connections {
-    target: Audio.audio
-    function onVolumeChanged() {
-      pill.osd = true
-      _osd_timer.restart()
-    }
+  property real current_volume: Audio.volume
+  property bool current_muted: Audio.is_muted
 
-    function onMutedChanged(params) {
-      onVolumeChanged();
+  onCurrent_volumeChanged: {
+    pill.osd = true
+    _osd_timer.restart()
+  }
+  onCurrent_mutedChanged: {
+    pill.osd = true
+    _osd_timer.restart()
+  }
+
+  Loader {
+    readonly property bool on:pill.mode === Pill.Modes.NotifPopup
+
+    id:pop_loader
+    visible: opacity > 0.01
+    opacity: on ? Math.pow(pill.morph_closeness, 1.3)  : 0
+    active: popup
+    Behavior on opacity {
+      NumberAnimation {
+        duration: Motion.v_fast
+      }
+    }
+    anchors.fill: parent
+    anchors.topMargin: 12 * pill.sc
+    anchors.leftMargin: 16 * pill.sc
+    anchors.rightMargin: 16 * pill.sc
+
+    sourceComponent: Item {
+      implicitHeight: popup_e.implicitHeight  / pill.sc
+
+      readonly property var p: NotificationsServer.popups
+      Popup {
+        id: popup_e
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        sc:pill.sc
+        notif: p[p.length-1]
+        onClose_popup: {
+          console.log("Popup dot clicked! Suppressing hover and clearing latch.")
+          pill.suppress_hover = true
+          pill._latched = false
+          _grace_timer.stop()
+        }
+      }
+      Text {
+        anchors {
+          bottom: parent.bottom
+          right: parent.right
+          rightMargin: 10
+          bottomMargin:10
+        }
+        font.pixelSize: 13
+        font.bold:true
+        color:Theme.c.fg
+        text: (  p.length - 1 ) + "+"
+        visible: opacity > 0
+        opacity:p.length > 1 ? 1 : 0
+        Behavior on opacity{
+          NumberAnimation{ duration: Motion.fast }
+        }
+
+      }
     }
   }
 
+  // Unread dot in Rest mode
+  Rectangle {
+    width: 6 * pill.sc
+    height: 6 * pill.sc
+    radius: 3 * pill.sc
+    color: Theme.c.red
+    anchors.right: parent.right
+    anchors.rightMargin: 16 * pill.sc
+    anchors.verticalCenter: parent.verticalCenter
+    visible: pill.mode === Pill.Modes.Rest && NotificationsServer.unread && !NotificationsServer.dnd > 0 && !is_surface
+    opacity: visible ? 1 : 0
+    Behavior on opacity { NumberAnimation { duration: Motion.fast } }
+  }
+
+  NotifCenterSurface {
+    open: notif_center_open
+    s: pill.sc
+    morph_closeness: pill.morph_closeness
+  }
 }

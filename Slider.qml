@@ -4,7 +4,7 @@ Item {
   id: root
 
   required property real value
-  property alias baseBar: base
+  property alias base_bar: base
   property bool disabled: false
   property color active_col: "#8B8888"
   property color muted_col: "#4A4A4A"

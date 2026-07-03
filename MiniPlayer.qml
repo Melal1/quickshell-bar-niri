@@ -3,7 +3,7 @@ import QtQuick
 
 Item {
   Image {
-    id: albumCover
+    id: album_cover
     readonly property string unk: "./Assests/UnkownTrack.jpg"
 
     anchors.verticalCenter: parent.verticalCenter
@@ -15,7 +15,7 @@ Item {
     fillMode: Image.PreserveAspectCrop
   }
   Rectangle {
-    anchors.centerIn:albumCover
+    anchors.centerIn:album_cover
     anchors.left: parent.left
     width:60; height: 60
     color:"transparent"
@@ -27,7 +27,7 @@ Item {
   Column {
     id:info
     anchors.verticalCenter: parent.verticalCenter
-    anchors.left: albumCover.right
+    anchors.left: album_cover.right
     anchors.leftMargin: 6
     anchors.verticalCenterOffset: 3
     width: 140
