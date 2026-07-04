@@ -14,15 +14,25 @@ PillSurface {
 
   property bool grouped_view: false
   property var expanded_groups: ({})
+  property var current_time: Date.now()
+
+  Timer {
+    interval: 30000
+    running: center.open
+    repeat: true
+    onTriggered: center.current_time = Date.now()
+  }
 
   onOpenChanged: {
     if (open) {
+      center.current_time = Date.now();
       NotificationsServer.suppress_popups = true;
       NotificationsServer.mark_all_seen();
       grouped_list.contentY = 0;
       chrono_list.contentY = 0;
     } else {
       NotificationsServer.suppress_popups = false;
+      center.expanded_groups = ({});
     }
   }
 
@@ -204,21 +214,15 @@ PillSurface {
       visible: center.grouped_view
       model: center.grouped_view ? NotificationsServer.groups : []
       spacing: 4 * center.s
-      boundsBehavior: Flickable.StopAtBounds
 
-      add: Transition {
-        NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Motion.std }
-        NumberAnimation { property: "y"; from: -20; duration: Motion.std; easing.type: Motion.std_ease }
-      }
-      displaced: Transition {
-        NumberAnimation { properties: "y"; duration: Motion.std; easing.type: Motion.std_ease }
-      }
+      boundsBehavior: Flickable.StopAtBounds
 
       delegate: Column {
         id: group_col
         required property var modelData
         required property int index
         property bool collapsed: !center.expanded_groups[modelData.preview.app]
+        width: grouped_list.width
         spacing: 8 * center.s
 
         // Group header
@@ -291,8 +295,20 @@ PillSurface {
               anchors.margins: -6 * center.s
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onClicked: NotificationsServer.remove_group(group_col.modelData)
+              onClicked: group_remove_anim.start()
             }
+          }
+        }
+
+        SequentialAnimation {
+          id: group_remove_anim
+          ParallelAnimation {
+            NumberAnimation { target: group_col; property: "scale"; to: 0.8; duration: Motion.fast; easing.type: Easing.OutQuad }
+            NumberAnimation { target: group_col; property: "opacity"; to: 0; duration: Motion.fast; easing.type: Easing.OutQuad }
+            NumberAnimation { target: group_col; property: "implicitHeight"; to: 0; duration: Motion.fast; easing.type: Easing.OutQuad }
+          }
+          ScriptAction {
+            script: NotificationsServer.remove_group(group_col.modelData)
           }
         }
 
@@ -311,6 +327,7 @@ PillSurface {
             width: parent.width
             s: center.s
             notif: group_col.modelData.preview
+            current_time: center.current_time
             opacity: group_col.collapsed ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Motion.fast } }
           }
@@ -318,19 +335,43 @@ PillSurface {
           Column {
             id: items_col
             width: parent.width
-            spacing: 3 * center.s
             opacity: group_col.collapsed ? 0 : 1
             Behavior on opacity { NumberAnimation { duration: Motion.fast } }
 
-            Repeater {
+            ListView {
+              id: inner_list
+              width: parent.width
+              implicitHeight: contentHeight
+              interactive: false
               model: group_col.modelData.items
+              spacing: 3 * center.s
 
-              NotifCard {
+              delegate: NotifCard {
+                id: inner_card
                 required property var modelData
                 required property int index
-                width: items_col.width
+                width: inner_list.width
                 s: center.s
                 notif: modelData
+                current_time: center.current_time
+
+                SequentialAnimation {
+                  id: inner_remove_anim
+                  ParallelAnimation {
+                    NumberAnimation { target: inner_card; property: "scale"; to: 0.8; duration: Motion.fast; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: inner_card; property: "opacity"; to: 0; duration: Motion.fast; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: inner_card; property: "implicitHeight"; to: 0; duration: Motion.fast; easing.type: Easing.OutQuad }
+                  }
+                  ScriptAction {
+                    script: {
+                      if (inner_card.notif) {
+                        NotificationsServer.remove_notif(inner_card.notif);
+                      }
+                    }
+                  }
+                }
+
+                onDismissRequested: inner_remove_anim.start()
               }
             }
           }
@@ -368,11 +409,31 @@ PillSurface {
       }
 
       delegate: NotifCard {
+        id: chrono_card
         required property var modelData
         required property int index
         width: chrono_list.width
         s: center.s
         notif: modelData
+        current_time: center.current_time
+
+        SequentialAnimation {
+          id: chrono_remove_anim
+          ParallelAnimation {
+            NumberAnimation { target: chrono_card; property: "scale"; to: 0.8; duration: Motion.fast; easing.type: Easing.OutQuad }
+            NumberAnimation { target: chrono_card; property: "opacity"; to: 0; duration: Motion.fast; easing.type: Easing.OutQuad }
+            NumberAnimation { target: chrono_card; property: "implicitHeight"; to: 0; duration: Motion.fast; easing.type: Easing.OutQuad }
+          }
+          ScriptAction {
+            script: {
+              if (chrono_card.notif) {
+                NotificationsServer.remove_notif(chrono_card.notif);
+              }
+            }
+          }
+        }
+
+        onDismissRequested: chrono_remove_anim.start()
       }
     }
   }
