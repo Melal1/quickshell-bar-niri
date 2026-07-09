@@ -4,7 +4,7 @@ import Quickshell
 Singleton {
   property bool time12h: true
   property bool clock_sec: false
-  property string screen_name: "DP-1"
+  property string screen_name: "eDP-1"
   property bool ignore_paused_mpd: false
   property bool ignore_mpd_mpris_art: false
   readonly property int rest_w: 130
@@ -21,5 +21,7 @@ Singleton {
   readonly property int popup_w : 400
   readonly property int notifcenter_w: 400
   readonly property int notifcenter_h: 500
+  readonly property int launcher_w: 500
+  readonly property int launcher_h: 600
 
 }

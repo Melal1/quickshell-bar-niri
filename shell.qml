@@ -22,7 +22,7 @@ Scope {
   }
 
   property var main_screen_data: get_screen_by_name(Settings.screen_name)
-  property var res_screen_data: get_screen_by_name("DP-1")
+  property var res_screen_data: get_screen_by_name(Settings.screen_name)
 
   PanelWindow {
     id: main_win
@@ -96,7 +96,7 @@ Scope {
     readonly property int top_gap: Settings.top_gap * scale - 6
     screen: res_screen_data
 
-    visible: res_screen_data !== null && res_screen_data.name === "DP-1"
+    visible: res_screen_data !== null && res_screen_data.name === Settings.screen_name
     anchors {
       top: true
       left: true
@@ -117,8 +117,12 @@ Scope {
   IpcHandler {
     target: "pill"
     function toggle_surface(name: string): void {
+      console.log("IpcHandler received name:", name);
       if (name === "notifcenter") {
         pill.toggle_surface(Pill.Surfaces.NotifCenter);
+      } else if (name === "launcher" || name === "\"launcher\"") {
+        console.log("Toggling launcher surface");
+        pill.toggle_surface(Pill.Surfaces.Launcher);
       } else if (name === "hide") {
         pill.active_surface = Pill.Surfaces.None;
       }
