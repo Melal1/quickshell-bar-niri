@@ -4,7 +4,7 @@ import Quickshell.Services.Notifications
 
 Item {
   id: root
-  required property real sc
+
   required property var notif
   readonly property bool _is_crit: notif.urgency === NotificationUrgency.Critical
   readonly property var acts: notif.actions ? notif.actions.filter(function(a) { return a.text.length > 0; }) : []
@@ -55,14 +55,11 @@ Item {
 
   Rectangle {
     id: icon_tile
-    anchors {
-      top:parent.top
-      left:parent.left
-      topMargin:8
-    }
-    width: 28 * root.sc
-    height: 28 * root.sc
-    radius: 9 * root.sc
+    anchors.left:parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    width: 47
+    height: 47
+    radius: 15
     color: Theme.c.black
     border.width: 1
     border.color: Theme.c.black2
@@ -70,7 +67,7 @@ Item {
     Image {
       id: popup_img
       anchors.fill: parent
-      anchors.margins: root.notif.image ? 0 : 6 * root.sc
+      anchors.margins: root.notif.image ? 0 : 10
       source: NotificationsServer.icon_for(root.notif)
       sourceSize.width: 56
       sourceSize.height: 56
@@ -82,9 +79,9 @@ Item {
     Rectangle {
       anchors.centerIn: parent
       visible: !popup_img.visible
-      width: 7 * root.sc
-      height: 7 * root.sc
-      radius: 2 * root.sc
+      width: 12
+      height: 12
+      radius: 3
       rotation: 45
       color: root._is_crit ? Theme.c.red2 : Theme.c.cyan
     }
@@ -94,13 +91,13 @@ Item {
     id: dots
     anchors.right: parent.right
     anchors.top: parent.top
-    anchors.topMargin: 4 * root.sc
-    spacing: 6 * root.sc
+    anchors.topMargin: 7
+    spacing: 10
 
     Rectangle {
-      width: 10 * root.sc
-      height: 10 * root.sc
-      radius: 5 * root.sc
+      width: 17
+      height: 17
+      radius: 8
       color: yellow_ar.containsMouse ? Theme.c.yellow2 : Theme.c.yellow
 
       Behavior on color {
@@ -119,9 +116,9 @@ Item {
     }
 
     Rectangle {
-      width: 10 * root.sc
-      height: 10 * root.sc
-      radius: 5 * root.sc
+      width: 16.67
+      height: 16.67
+      radius: 8.33
       color: red_ar.containsMouse ? Theme.c.red2 : Theme.c.red
 
       Behavior on color {
@@ -149,57 +146,57 @@ Item {
   Column {
     id: col
     anchors.left: icon_tile.right
-    anchors.leftMargin: 10 * root.sc
+    anchors.leftMargin: 16.67
     anchors.right: dots.left
-    anchors.rightMargin: 8 * root.sc
+    anchors.rightMargin: 13.33
     anchors.top: parent.top
-    spacing: 3 * root.sc
+    spacing: 5
 
     Text {
       width: parent.width
       text: (root.notif.appName && root.notif.appName.length) ? root.notif.appName : "System"
       color: Theme.c.white2
       font.family: Theme.clock_font
-      font.pixelSize: 8.5 * root.sc
+      font.pixelSize: 14
       font.weight: Font.DemiBold
       font.capitalization: Font.AllUppercase
-      font.letterSpacing: 1.4 * root.sc
+      font.letterSpacing: 2.33
       elide: Text.ElideRight
     }
 
     Row {
       width: parent.width
-      spacing: 5 * root.sc
+      spacing: 8.33
 
       Item {
         visible: root._is_crit
         anchors.verticalCenter: parent.verticalCenter
-        width: 8 * root.sc
-        height: 8 * root.sc
+        width: 13.33
+        height: 13.33
 
         Rectangle {
           anchors.centerIn: parent
-          width: 8 * root.sc
-          height: 8 * root.sc
+          width: 13.33
+          height: 13.33
           radius: 999
           color: Theme.c.red
           opacity: 0.3
         }
         Rectangle {
           anchors.centerIn: parent
-          width: 4 * root.sc
-          height: 4 * root.sc
+          width: 6.67
+          height: 6.67
           radius: 999
           color: Theme.c.red
         }
       }
 
       Text {
-        width: parent.width - (root._is_crit ? 13 * root.sc : 0)
+        width: parent.width - (root._is_crit ? 21.67 : 0)
         text: root.notif.summary
         color: Theme.c.white
         font.family: Theme.clock_font
-        font.pixelSize: 11.5 * root.sc
+        font.pixelSize: 19
         font.weight: Font.DemiBold
         maximumLineCount: 1
         elide: Text.ElideRight
@@ -212,7 +209,7 @@ Item {
       text: root.notif.body
       color: Theme.c.white2
       font.family: Theme.clock_font
-      font.pixelSize: 10.5 * root.sc
+      font.pixelSize: 18
       wrapMode: Text.Wrap
       maximumLineCount: 2
       elide: Text.ElideRight
@@ -222,14 +219,14 @@ Item {
     Item {
       visible: root.acts.length > 0 || root.notif.hasInlineReply
       width: parent.width
-      height: root.reply_mode ? 28 * root.sc : Math.max(acts_row.implicitHeight,  root.notif.hasInlineReply
-        ? 24 * root.sc : 0)
+      height: root.reply_mode ? 46.66 : Math.max(acts_row.implicitHeight,  root.notif.hasInlineReply
+        ? 40 : 0)
       Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
 
       Row {
         id: acts_row
-        spacing: 6 * root.sc
-        topPadding: 4 * root.sc
+        spacing: 10
+        topPadding: 6.67
         opacity: root.reply_mode ? 0 : 1
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Motion.fast } }
@@ -242,8 +239,8 @@ Item {
             required property var modelData
             required property int index
 
-            height: 20 * root.sc
-            width: act_text.implicitWidth + 18 * root.sc
+            height: 33.33
+            width: act_text.implicitWidth + 30
             radius: 999
             color: Theme.c.black
             border.width: 1
@@ -254,7 +251,7 @@ Item {
               anchors.centerIn: parent
               text: act_pill.modelData.text
               color: act_ar.containsMouse ? Theme.c.white : Theme.c.black2
-              font.pixelSize: 10 * root.sc
+              font.pixelSize: 17
               font.weight: Font.DemiBold
             }
 
@@ -280,9 +277,9 @@ Item {
         y: acts_row.topPadding
         x: root.reply_mode ? 0 : (acts_row.width > 0 ? acts_row.width + acts_row.spacing : 0)
 
-        height: root.reply_mode ? 24 * root.sc : 20 * root.sc
-        width: root.reply_mode ? parent.width : reply_text.implicitWidth + 18 * root.sc
-        radius: root.reply_mode ? 4 * root.sc : 12.05 * root.sc
+        height: root.reply_mode ? 40 : 33.33
+        width: root.reply_mode ? parent.width : reply_text.implicitWidth + 30
+        radius: root.reply_mode ? 6.67 : 20.08
         color: Theme.c.black
         border.width: 1
         border.color: Theme.c.black2
@@ -311,7 +308,7 @@ Item {
           anchors.centerIn: parent
           text: "Reply"
           color: reply_ar.containsMouse ? Theme.c.white : Theme.c.black2
-          font.pixelSize: 10 * root.sc
+          font.pixelSize: 17
           font.weight: Font.DemiBold
           opacity: root.reply_mode ? 0 : 1
           visible: opacity > 0
@@ -321,9 +318,9 @@ Item {
         TextInput {
           id: reply_input
           anchors.fill: parent
-          anchors.margins: 6 * root.sc
+          anchors.margins: 10
           color: Theme.c.white
-          font.pixelSize: 10 * root.sc
+          font.pixelSize: 17
           font.family: Theme.clock_font
           verticalAlignment: TextInput.AlignVCenter
           opacity: root.reply_mode ? 1 : 0
@@ -350,7 +347,7 @@ Item {
             visible: !reply_input.text && !reply_input.activeFocus
             text: root.notif.inlineReplyPlaceholder || "Reply..."
             color: Theme.c.white2
-            font.pixelSize: 10 * root.sc
+            font.pixelSize: 17
             font.family: Theme.clock_font
             verticalAlignment: Text.AlignVCenter
           }

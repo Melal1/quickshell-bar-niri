@@ -27,7 +27,6 @@ Scope {
   PanelWindow {
     id: main_win
     screen: main_screen_data
-    readonly property real sc: main_screen_data ? (main_screen_data.height / 1080) : 1
 
     visible: main_screen_data !== null && main_screen_data.name === Settings.screen_name
     anchors {
@@ -63,7 +62,7 @@ Scope {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: pill.is_surface ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
-    
+
     FocusScope {
       anchors.fill: parent
       focus: pill.is_surface
@@ -81,17 +80,18 @@ Scope {
 
     Pill {
       id: pill
-      sc: main_win.sc
+      scale:0.8
+
       bar_win: main_win
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
-      anchors.topMargin: Settings.top_gap
+      anchors.topMargin: 0
     }
   }
 
   PanelWindow {
     id: res_win
-    readonly property real scale: res_screen_data ? (res_screen_data.height / 1080) : 1
+    readonly property real scale: 0.8
     readonly property real rest_h: Settings.rest_h * scale
     readonly property int top_gap: Settings.top_gap * scale - 6
     screen: res_screen_data

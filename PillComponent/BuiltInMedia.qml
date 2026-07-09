@@ -5,7 +5,6 @@ import "../"
 Item {
   id: root
 
-  required property real sc
   required property bool playing
   required property bool paused
 
@@ -39,17 +38,17 @@ Item {
 
   Item {
     anchors.verticalCenter: parent.verticalCenter
-    anchors.verticalCenterOffset: -0.60 * root.sc
+    anchors.verticalCenterOffset: -1
     anchors.left: parent.left
 
     Image {
       id: cover
       anchors.verticalCenter: parent.verticalCenter
-      height: Settings.hover_h * root.sc * 0.55
+      height: Settings.hover_h * 0.6
       width: height
       readonly property string unk: "../Assests/UnkownTrack.jpg"
       anchors.left: parent.left
-      anchors.leftMargin: 15 * root.sc
+      anchors.leftMargin: 25
       source: {
         if (!Player.player) return unk;
         if (Settings.ignore_mpd_mpris_art && Player.player.desktopEntry === "mpd-mpris") return unk;
@@ -61,22 +60,22 @@ Item {
 
     Rectangle {
       anchors.centerIn: cover
-      width: cover.width + 6.00 * root.sc
-      height: cover.width + 6.00 * root.sc
+      width: cover.width + 10
+      height: cover.width + 10
       color: "transparent"
-      border.width: 3.00 * root.sc
+      border.width: 5
       border.color: Theme.c.bg
-      radius: width / (2.40 * root.sc)
+      radius: width / 5
     }
 
     Item {
       id: info_container
       anchors.verticalCenter: parent.verticalCenter
       anchors.left: cover.right
-      anchors.leftMargin: 6.00 * root.sc
-      anchors.verticalCenterOffset: 3.60 * root.sc
-      width: 108.00 * root.sc
-      height: 27.60 * root.sc
+      anchors.leftMargin: 10
+      anchors.verticalCenterOffset: 6
+      width: 180
+      height: 46
 
       HoverHandler {
         id: info_hover
@@ -96,7 +95,7 @@ Item {
           text: Player.player ? Player.player.trackTitle !== "" ? Player.player.trackTitle : "No Title" : "Nothing Here"
           font.bold: true
           color: Theme.c.fg
-          font.pixelSize: Math.round(9.60 * root.sc)
+          font.pixelSize: 16
           width: parent.width
         }
 
@@ -105,10 +104,10 @@ Item {
 
           Visullizer {
             anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -3.00 * root.sc
+            anchors.verticalCenterOffset: -5
             playing: root.playing
             paused: root.paused
-            scale: 0.36 * root.sc
+            scale: 0.6
             color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
             clip: true
             width: root.media_active ? implicitWidth : 0
@@ -129,10 +128,10 @@ Item {
           Marquee {
             active: info.visible
             text: Player.player ? Player.player.trackArtist !== "" ? Player.player.trackArtist : "" : "but chickens"
-            font.pixelSize: Math.round(7.80 * root.sc)
+            font.pixelSize: 13
             font.bold: true
             color: Theme.c.black2
-            width: 66.00 * root.sc
+            width: 110
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: -3
           }
@@ -142,7 +141,7 @@ Item {
       Column {
         id: controls_col
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset:-2.20 * root.sc
+        anchors.verticalCenterOffset:-3.67
         width: parent.width
         opacity: info.opacity > 0.3 ? 0 :1
         Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -151,13 +150,13 @@ Item {
 
         Row {
           anchors.horizontalCenter: parent.horizontalCenter
-          spacing: 14* root.sc
+          spacing: 23.33
 
           Text {
             readonly property bool active: (Player.player && Player.player.canGoPrevious)
             text: "󰒮"
             font.family: "Agave Nerd Font Propo"
-            font.pixelSize: Math.round(16.80 * root.sc)
+            font.pixelSize: 28
             color: active ? Theme.c.fg : Theme.c.black2
             MouseArea {
               anchors.fill: parent
@@ -170,21 +169,21 @@ Item {
             }
           }
           Rectangle {
-            width: 24 * root.sc
-            height: 21.6 * root.sc
-            radius: 2.4 * root.sc
+            width: 40
+            height: 36
+            radius: 4
             color: Theme.c.black
             anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -1.80 * root.sc
+            anchors.verticalCenterOffset: -3
 
             Text {
               readonly property bool active : Player.player  && (Player.player.canPlay || Player.player.canPause || Player.player.canTogglePlaying)
               id: play_text
               text: root.playing ? "󰏤" : "󰐊"
               anchors.centerIn: parent
-              anchors.verticalCenterOffset: -0.20 * root.sc
+              anchors.verticalCenterOffset: -0.33
               font.family: "Agave Nerd Font Propo"
-              font.pixelSize: Math.round(19.20 * root.sc)
+              font.pixelSize: 32
               color:  active ? Theme.c.fg : Theme.c.black2
             }
             MouseArea {
@@ -205,7 +204,7 @@ Item {
             readonly property bool active :(Player.player && Player.player.canGoNext)
             text: "󰒭"
             font.family: "Agave Nerd Font Propo"
-            font.pixelSize: Math.round(16.80 * root.sc)
+            font.pixelSize: 28
             color: active  ? Theme.c.fg : Theme.c.black2
             MouseArea {
               anchors.fill: parent
@@ -221,8 +220,8 @@ Item {
         Rectangle {
           width: parent.width
           anchors.horizontalCenter: parent.horizontalCenter
-          height: 3.60 * root.sc
-          radius: 1.80 * root.sc
+          height: 6
+          radius: 3
           color: Theme.c.black
 
           Rectangle {

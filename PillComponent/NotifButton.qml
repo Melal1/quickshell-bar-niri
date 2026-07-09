@@ -4,13 +4,13 @@ import "../"
 
 Rectangle {
   id: root
-  required property real sc
+
   signal leftClicked()
 
   anchors.verticalCenter: parent.verticalCenter
-  width: 28 * root.sc
-  height: 28 * root.sc
-  radius: 14 * root.sc
+  width: 46.66
+  height: 46.66
+  radius: 23.33
   // color: notif_hover.containsMouse ? Theme.c.black : "transparent"
   color:"transparent"
   clip: true
@@ -22,7 +22,7 @@ Rectangle {
     anchors.centerIn: parent
     text:""
     color: Theme.c.fg
-    font.pixelSize: 14 * root.sc
+    font.pixelSize: 23
 
     SequentialAnimation {
       id: jiggle
@@ -37,13 +37,13 @@ Rectangle {
   // DND diagonal strikethrough
   Rectangle {
     id: dnd_line
-    property real inset: 6 * root.sc
+    property real inset: 10
     property real diagonal: (parent.width - 2.2 * inset) * 1.414
     x: inset
     y: inset - height / 2
     width: NotificationsServer.dnd ? diagonal : 0
-    height: 3 * root.sc
-    radius: 1 * root.sc
+    height: 5
+    radius: 1.67
     color: Theme.c.red
     rotation: 45
     transformOrigin: Item.Left
@@ -57,9 +57,9 @@ Rectangle {
 
   // Unread badge
   Rectangle {
-    width: 12 * root.sc
-    height: 12 * root.sc
-    radius: 6 * root.sc
+    width: 20
+    height: 20
+    radius: 10
     color: Theme.c.red
     anchors.top: parent.top
     anchors.right: parent.right
@@ -69,7 +69,7 @@ Rectangle {
       anchors.centerIn: parent
       text: NotificationsServer.unread > 9 ? "9+" : NotificationsServer.unread
       color: Theme.c.bg
-      font.pixelSize: 8 * root.sc
+      font.pixelSize: 13
       font.bold: true
     }
   }

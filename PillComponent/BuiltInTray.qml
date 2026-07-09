@@ -6,7 +6,6 @@ import "../"
 Item {
   id: root
 
-  required property real sc
   required property var bar_win
 
   signal interaction_started()
@@ -39,7 +38,7 @@ Item {
       width: tray.width
       height: tray.height
       color: tray.body_color
-      radius: tray.radius - 2 * root.sc
+      radius: tray.radius - 3.33
       opacity: !tray_hover.hovered ? 1 : 0
       Behavior on opacity {
         NumberAnimation { duration: Motion.std }
@@ -53,10 +52,10 @@ Item {
       }
     }
 
-    implicitWidth: Math.min(systray.implicitWidth + 13 * root.sc, max_w)
-    implicitHeight: systray.implicitHeight + 7 * root.sc
+    implicitWidth: Math.min(systray.implicitWidth + 21.67, max_w)
+    implicitHeight: systray.implicitHeight + 11.67
     anchors.fill: parent
-    radius: 9 * root.sc
+    radius: 15
     clip: true
 
     HoverHandler {
@@ -65,7 +64,7 @@ Item {
 
     Flickable {
       anchors.fill: parent
-      anchors.leftMargin: 4 * root.sc
+      anchors.leftMargin: 6.67
 
       contentWidth: systray.implicitWidth
       contentHeight: parent.height
@@ -73,7 +72,7 @@ Item {
 
       Tray {
         id: systray
-        sc: root.sc
+
         bar_win: root.bar_win
 
         anchors.verticalCenter: parent.verticalCenter

@@ -4,13 +4,14 @@ import Quickshell.Services.SystemTray
 import "PillComponent"
 Item {
   id: pill
-  required property real sc
+
   required property var bar_win
   enum Modes {
     Rest,
     Hover,
     Osd,
-    NotifPopup
+    NotifPopup,
+    None
   }
 
   enum Surfaces {
@@ -30,25 +31,14 @@ Item {
     }
   }
 
-  property bool exiting_surface: false
-  onIs_surfaceChanged: {
-    if (!is_surface) {
-      exiting_surface = true;
-    }
-  }
-  onMorph_closenessChanged: {
-    if (morph_closeness > 0.95 && exiting_surface) {
-      exiting_surface = false;
-    }
-  }
-
   property bool suppress_hover: false
 
   property var modes_dim: ({
       [Pill.Modes.Rest]: [Settings.rest_w, Settings.rest_h,Settings.round_rad],
       [Pill.Modes.Hover]: [Settings.hover_w, Settings.hover_h,Settings.round_rad - 20 ],
       [Pill.Modes.Osd]: [Settings.osd_w, Settings.osd_h,Settings.round_rad],
-      [Pill.Modes.NotifPopup]: [Settings.popup_w, pop_loader.item ? pop_loader.item.implicitHeight + 15 * sc : Settings.rest_h,Settings.round_rad - 20 ]
+      [Pill.Modes.NotifPopup]: [Settings.popup_w, pop_loader.item ? pop_loader.item.implicitHeight + 25 : Settings.rest_h,Settings.round_rad - 20 ],
+      [Pill.Modes.None]: [0,0,0 ]
   })
 
   property var surface_dim: ({
@@ -63,6 +53,7 @@ Item {
   readonly property bool expanded: (hovering && !suppress_hover) || _latched || pinned
 
   readonly property int mode: {
+    if(is_surface) return Pill.Modes.None
     if (popup) return Pill.Modes.NotifPopup
     if (osd && !pinned) return Pill.Modes.Osd
     if (expanded) return Pill.Modes.Hover
@@ -70,15 +61,16 @@ Item {
   }
 
   readonly property var active_dim: (is_surface && !popup) ? surface_dim[active_surface] : modes_dim[mode]
-  readonly property real target_w: active_dim[0] * sc
-  readonly property real target_h: active_dim[1] * sc
+  readonly property real target_w: active_dim[0]
+  readonly property real target_h: active_dim[1]
 
   width: target_w
   height: target_h
+  property int rad: active_dim[2]
 
   readonly property real morph_closeness: {
     const d = Math.max(Math.abs(width - target_w), Math.abs(height - target_h));
-    return 1 - Math.min(1, d / (110 * sc));
+    return 1 - Math.min(1, d / (183.33));
 
   }
 
@@ -120,15 +112,15 @@ Item {
     readonly property bool hover_mode : pill.mode === Pill.Modes.Hover
     readonly property bool osd_mode : pill.mode === Pill.Modes.Osd
     anchors.fill: parent
-    radius: pill.modes_dim[pill.mode][2] * pill.sc
+    radius: pill.rad
     Behavior on radius {
       NumberAnimation { duration: Motion.std}
     }
     body_color: Theme.c.bg
     top_color: Theme.c.bg
     bottom_color: Theme.c.black2
-    border_w: hover_mode  ? 1.8 * pill.sc : osd_mode ? 1.2 * pill.sc : 1
-    running: hover_mode || osd_mode
+    border_w: hover_mode || is_surface  ? 3 : osd_mode ? 2 : 1
+    running: hover_mode || osd_mode || is_surface
   }
 
   // ============================================================
@@ -144,7 +136,7 @@ Item {
 
     readonly property bool media_active: built_in_media.media_active
     property bool last_pinned_state: false
-    opacity: (hover_mode || pill.mode === Pill.Modes.Rest) && !is_surface ? (pill.exiting_surface ? Math.pow(pill.morph_closeness, 1.3) : 1) : 0
+    opacity: (hover_mode || pill.mode === Pill.Modes.Rest) ? 1 : 0
 
     Behavior on opacity {
       NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
@@ -155,9 +147,9 @@ Item {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.top: parent.top
 
-      readonly property real rest_size: Settings.rest_h * pill.sc
+      readonly property real rest_size: Settings.rest_h
       anchors.topMargin: (rest_size + (main.hover_mode ? rest_size * 0.2 : 0) - height) / 2
-      anchors.horizontalCenterOffset: main.media_active && !main.hover_mode ? 7 * pill.sc : 0
+      anchors.horizontalCenterOffset: main.media_active && !main.hover_mode ? 11.67 : 0
 
       Behavior on anchors.horizontalCenterOffset {
         NumberAnimation { duration: Motion.std; easing.type: Motion.std_ease }
@@ -182,7 +174,7 @@ Item {
     BuiltInMedia {
       id: built_in_media
       anchors.fill: parent
-      sc: pill.sc
+
       playing: main.playing
       paused: main.paused
       opacity: main.hover_mode ? Math.pow(pill.morph_closeness, 1.3) : 0
@@ -194,7 +186,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       anchors.verticalCenterOffset: -1
       anchors.left: parent.left
-      anchors.leftMargin: 22 * pill.sc
+      anchors.leftMargin: 36.67
       playing: main.playing
       paused: main.paused
       color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
@@ -238,7 +230,7 @@ Item {
         color: Theme.c.black2
         font.bold: true
         font.family: Theme.clock_font
-        font.pixelSize: Math.round(9 * pill.sc)
+        font.pixelSize: 15
       }
 
       Text {
@@ -247,14 +239,14 @@ Item {
         color: Theme.c.black2
         font.bold: true
         font.family: Theme.clock_font
-        font.pixelSize: Math.round(9 * pill.sc)
+        font.pixelSize: 15
       }
 
       Text {
         color: Theme.c.black2
         font.bold: true
         font.family: Theme.clock_font
-        font.pixelSize: Math.round(9 * pill.sc)
+        font.pixelSize: 15
         text: AthanStatus.text
 
         Binding {
@@ -279,18 +271,18 @@ Item {
     // ── System Tray and Notif Btn (hover mode only)
     Row {
       anchors.right: parent.right
-      anchors.rightMargin: 15 * pill.sc
+      anchors.rightMargin: 25
       anchors.verticalCenter: parent.verticalCenter
-      spacing: 1 * pill.sc
+      spacing: 1.67
       layoutDirection: Qt.RightToLeft
 
-      opacity: main.hover_mode ? (pill.exiting_surface ? Math.pow(pill.morph_closeness, 1.3) : 1) : 0
+      opacity: main.hover_mode ? 1 : 0
       visible: opacity > 0
 
       BuiltInTray {
         id: built_in_tray
         anchors.verticalCenter: parent.verticalCenter
-        sc: pill.sc
+
         bar_win: pill.bar_win
 
         onInteraction_started: {
@@ -308,7 +300,7 @@ Item {
 
       NotifButton {
         id: notif_btn
-        sc: pill.sc
+
         onLeftClicked: pill.toggle_surface(Pill.Surfaces.NotifCenter)
       }
     }
@@ -317,8 +309,8 @@ Item {
   // Volume Osd
   Loader {
     anchors.fill: parent
-    anchors.leftMargin: 30 * pill.sc
-    anchors.rightMargin: 15 * pill.sc
+    anchors.leftMargin: 50
+    anchors.rightMargin: 25
     active: pill.mode === Pill.Modes.Osd
     opacity: pill.mode === Pill.Modes.Osd ? Math.pow(pill.morph_closeness, 1.2) : 0
     sourceComponent: Slider {
@@ -374,12 +366,12 @@ Item {
       }
     }
     anchors.fill: parent
-    anchors.topMargin: 12 * pill.sc
-    anchors.leftMargin: 16 * pill.sc
-    anchors.rightMargin: 16 * pill.sc
+    anchors.topMargin: 20
+    anchors.leftMargin: 27
+    anchors.rightMargin: 27
 
     sourceComponent: Item {
-      implicitHeight: popup_e.implicitHeight  / pill.sc
+      implicitHeight: popup_e.implicitHeight + 20
 
       readonly property var p: NotificationsServer.popups
       Popup {
@@ -387,7 +379,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        sc:pill.sc
+
         notif: p[p.length-1]
         onClose_popup: {
           console.log("Popup dot clicked! Suppressing hover and clearing latch.")
@@ -419,12 +411,12 @@ Item {
 
   // Unread dot in Rest mode
   Rectangle {
-    width: 6 * pill.sc
-    height: 6 * pill.sc
-    radius: 3 * pill.sc
+    width: 10
+    height: 10
+    radius: 5
     color: Theme.c.red
     anchors.right: parent.right
-    anchors.rightMargin: 16 * pill.sc
+    anchors.rightMargin: 26.67
     anchors.verticalCenter: parent.verticalCenter
     visible: pill.mode === Pill.Modes.Rest && NotificationsServer.unread && !NotificationsServer.dnd > 0 && !is_surface
     opacity: visible ? 1 : 0
@@ -433,7 +425,6 @@ Item {
 
   NotifCenterSurface {
     open: notif_center_open
-    s: pill.sc
     morph_closeness: pill.morph_closeness
   }
 }
