@@ -72,9 +72,33 @@ Item {
   property bool hovering: false
   property bool pinned: false
   property bool osd: false
+  property string osd_kind: "volume"
   property bool popup: NotificationsServer.popups.length > 0
   property bool _latched: false
+  property bool brightness_ready: false
+  property int current_brightness: Brightness.current
+  property bool brightness_available: Brightness.available
   readonly property bool expanded: (hovering && !suppress_hover) || _latched || pinned
+
+  function show_volume_osd() {
+    osd_kind = "volume"
+    osd = true
+    _osd_timer.restart()
+  }
+
+  function show_brightness_osd() {
+    osd_kind = "brightness"
+    osd = true
+    _osd_timer.restart()
+  }
+
+  onBrightness_availableChanged: {
+    if (brightness_available) brightness_ready = true
+  }
+
+  onCurrent_brightnessChanged: {
+    if (brightness_ready && Brightness.available) show_brightness_osd()
+  }
 
   readonly property int mode: {
     if(is_surface) return Pill.Modes.None
@@ -330,7 +354,7 @@ Item {
     }
   }
 
-  // Volume Osd
+  // Volume / brightness OSD
   Loader {
     anchors.fill: parent
     anchors.leftMargin: 50
@@ -338,9 +362,13 @@ Item {
     active: pill.mode === Pill.Modes.Osd
     opacity: pill.mode === Pill.Modes.Osd ? Math.pow(pill.morph_closeness, 1.2) : 0
     sourceComponent: Slider {
-      value: Audio.volume
-      disabled: Audio.is_muted
-      icon: Audio.is_muted ? "󰖁"
+      readonly property bool brightness_osd: pill.osd_kind === "brightness"
+
+      value: brightness_osd ? Brightness.value : Audio.volume
+      disabled: brightness_osd ? !Brightness.available : Audio.is_muted
+      active_col: brightness_osd ? Theme.c.yellow : "#8B8888"
+      muted_col: brightness_osd ? Theme.c.black2 : "#4A4A4A"
+      icon: brightness_osd ? "☀" : Audio.is_muted ? "󰖁"
       : Audio.volume < 0.33 ? "󰕿"
       : Audio.volume < 0.66 ? "󰖀"
       : "󰕾"
@@ -369,12 +397,10 @@ Item {
   property bool current_muted: Audio.is_muted
 
   onCurrent_volumeChanged: {
-    pill.osd = true
-    _osd_timer.restart()
+    pill.show_volume_osd()
   }
   onCurrent_mutedChanged: {
-    pill.osd = true
-    _osd_timer.restart()
+    pill.show_volume_osd()
   }
 
   Loader {

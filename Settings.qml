@@ -5,6 +5,7 @@ Singleton {
   property bool time12h: true
   property bool clock_sec: false
   property string screen_name: "eDP-1"
+  property string backlight_device: "intel_backlight"
   property bool ignore_paused_mpd: false
   property bool ignore_mpd_mpris_art: false
   readonly property int rest_w: 217
