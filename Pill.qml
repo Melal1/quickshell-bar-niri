@@ -108,7 +108,7 @@ Item {
     return Pill.Modes.Rest
   }
 
-  readonly property var active_dim: (is_surface && !popup) ? surface_dim[active_surface] : modes_dim[mode]
+  readonly property var active_dim: (is_surface ) ? surface_dim[active_surface] : modes_dim[mode]
   readonly property real target_w: active_dim[0]
   readonly property real target_h: active_dim[1]
 
@@ -159,15 +159,18 @@ Item {
     id:body
     readonly property bool hover_mode : pill.mode === Pill.Modes.Hover
     readonly property bool osd_mode : pill.mode === Pill.Modes.Osd
+    readonly property bool notif_on_surface:  is_surface && popup
     anchors.fill: parent
     radius: pill.rad
     Behavior on radius {
       NumberAnimation { duration: Motion.std}
     }
+    duration: notif_on_surface ? 1500 : 3000
     body_color: Theme.c.bg
-    top_color: Theme.c.bg
-    bottom_color: Theme.c.black2
-    border_w: hover_mode || is_surface  ? 3 : osd_mode ? 2 : 1
+    top_color:notif_on_surface? Theme.c.red2 : Theme.c.fg
+    bottom_color: notif_on_surface  ? Theme.c.red : Theme.c.black
+
+    border_w: notif_on_surface ? 5 :hover_mode || is_surface  ? 3 : osd_mode ? 2 : 1
     running: hover_mode || osd_mode || is_surface
   }
 
@@ -409,7 +412,7 @@ Item {
     id:pop_loader
     visible: opacity > 0.01
     opacity: on ? Math.pow(pill.morph_closeness, 1.3)  : 0
-    active: popup
+    active:  popup
     Behavior on opacity {
       NumberAnimation {
         duration: Motion.v_fast

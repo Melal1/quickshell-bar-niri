@@ -24,7 +24,7 @@ Singleton {
   readonly property int notifcenter_h: 833
   readonly property int launcher_w: 600
   readonly property int launcher_h: 700
-  readonly property int clipboard_w: 500
-  readonly property int clipboard_h: 600
+  readonly property int clipboard_w: 760
+  readonly property int clipboard_h: 640
 
 }
