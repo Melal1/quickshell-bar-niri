@@ -1,0 +1,15 @@
+[
+  {
+    "id": "web:nixpkgs",
+    "name": "nixpkgs",
+    "genericName": "Search Nix Packages",
+    "keywords": [
+      "nix",
+      "nixos",
+      "package",
+      "packages"
+    ],
+    "icon": "nix-snowflake",
+    "url": "https://search.nixos.org/packages?query={query}"
+  }
+]
