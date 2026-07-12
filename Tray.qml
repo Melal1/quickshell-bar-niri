@@ -14,7 +14,7 @@ Item {
   required property var bar_win
 
   implicitWidth: visible ? row.implicitWidth : 0
-  implicitHeight: 36.67
+  implicitHeight: 37
 
   function show_menu(item, anchor_item) {
     if (!item.hasMenu)
@@ -43,8 +43,8 @@ Item {
 
         required property var modelData
 
-        Layout.preferredWidth: 41.66
-        Layout.preferredHeight: 41.66
+        Layout.preferredWidth: 42
+        Layout.preferredHeight: 42
 
         // Rectangle {
         //   anchors.fill: parent
@@ -61,8 +61,8 @@ Item {
           source: slot.modelData.icon
           sourceSize.width: 64
           sourceSize.height: 64
-          width: 26.67
-          height: 26.67
+          width: 27
+          height: 27
           fillMode: Image.PreserveAspectFit
           smooth: true
           cache: true
@@ -102,15 +102,15 @@ Item {
     property bool expanded: false
     signal activated()
 
-    height: entry_data && entry_data.isSeparator ? 13.33 : 50
+    height: entry_data && entry_data.isSeparator ? 13 : 50
 
     Rectangle {
       visible: mrow.entry_data && mrow.entry_data.isSeparator
       anchors.verticalCenter: parent.verticalCenter
       anchors.left: parent.left
       anchors.right: parent.right
-      anchors.leftMargin: 13.33 + mrow.indent
-      anchors.rightMargin: 13.33
+      anchors.leftMargin: 13 + mrow.indent
+      anchors.rightMargin: 13
       height: 1
       color: Theme.c.black2
       opacity: 0.4
@@ -128,8 +128,8 @@ Item {
       Rectangle {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 8.33
-        width: 3.33
+        anchors.leftMargin: 8
+        width: 3
         height: parent.height * 0.44
         radius: width / 2
         color: Theme.c.cyan
@@ -142,14 +142,14 @@ Item {
         id: state_box
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 23.33
+        anchors.leftMargin: 23
         readonly property bool is_check: mrow.entry_data && mrow.entry_data.buttonType === QsMenuButtonType.CheckBox
         readonly property bool is_radio: mrow.entry_data && mrow.entry_data.buttonType === QsMenuButtonType.RadioButton
         readonly property bool present: is_check || is_radio
         readonly property bool checked: mrow.entry_data && mrow.entry_data.checkState === Qt.Checked
         visible: present
-        width: present ? 16.67 : 0
-        height: 16.67
+        width: present ? 17 : 0
+        height: 17
         radius: is_radio ? width / 2 : 5
         color: "transparent"
         border.width: 1
@@ -158,8 +158,8 @@ Item {
         Rectangle {
           anchors.centerIn: parent
           visible: state_box.checked
-          width: 8.33
-          height: 8.33
+          width: 8
+          height: 8
           radius: state_box.is_radio ? width / 2 : 2.5
           color: Theme.c.cyan
         }
@@ -171,8 +171,8 @@ Item {
         anchors.left: state_box.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.leftMargin: state_box.present ? 10 : 0
-        width: mrow.entry_data && mrow.entry_data.icon ? 23.33 : 0
-        height: 23.33
+        width: mrow.entry_data && mrow.entry_data.icon ? 23 : 0
+        height: 23
         source: mrow.entry_data && mrow.entry_data.icon ? mrow.entry_data.icon : ""
         sourceSize.width: 28
         sourceSize.height: 28
@@ -184,7 +184,7 @@ Item {
 
       Text {
         anchors.left: entry_icon.right
-        anchors.leftMargin: mrow.entry_data && mrow.entry_data.icon ? 13.33 : 0
+        anchors.leftMargin: mrow.entry_data && mrow.entry_data.icon ? 13 : 0
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: chevron.visible ? chevron.left : parent.right
         anchors.rightMargin: 20
@@ -199,7 +199,7 @@ Item {
       Text {
         id: chevron
         anchors.right: parent.right
-        anchors.rightMargin: 16.67
+        anchors.rightMargin: 17
         anchors.verticalCenter: parent.verticalCenter
         visible: mrow.entry_data && mrow.entry_data.hasChildren === true
         text: mrow.expanded ? "▾" : "▸"
@@ -263,11 +263,11 @@ Item {
         body_color:Theme.c.bg
         border_w:3
 
-        x: Math.max(13.33, Math.min(
+        x: Math.max(13, Math.min(
             menu.anchor_x - width / 2,
-            menu.width - width - 13.33))
+            menu.width - width - 13))
         y: 100
-        width: 349.99
+        width: 350
         radius: 17
         clip: true
 

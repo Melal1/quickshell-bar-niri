@@ -116,9 +116,9 @@ Item {
     }
 
     Rectangle {
-      width: 16.67
-      height: 16.67
-      radius: 8.33
+      width: 17
+      height: 17
+      radius: 8
       color: red_ar.containsMouse ? Theme.c.red2 : Theme.c.red
 
       Behavior on color {
@@ -146,9 +146,9 @@ Item {
   Column {
     id: col
     anchors.left: icon_tile.right
-    anchors.leftMargin: 16.67
+    anchors.leftMargin: 17
     anchors.right: dots.left
-    anchors.rightMargin: 13.33
+    anchors.rightMargin: 13
     anchors.top: parent.top
     spacing: 5
 
@@ -160,39 +160,39 @@ Item {
       font.pixelSize: 14
       font.weight: Font.DemiBold
       font.capitalization: Font.AllUppercase
-      font.letterSpacing: 2.33
+      font.letterSpacing: 2
       elide: Text.ElideRight
     }
 
     Row {
       width: parent.width
-      spacing: 8.33
+      spacing: 8
 
       Item {
         visible: root._is_crit
         anchors.verticalCenter: parent.verticalCenter
-        width: 13.33
-        height: 13.33
+        width: 13
+        height: 13
 
         Rectangle {
           anchors.centerIn: parent
-          width: 13.33
-          height: 13.33
+          width: 13
+          height: 13
           radius: 999
           color: Theme.c.red
           opacity: 0.3
         }
         Rectangle {
           anchors.centerIn: parent
-          width: 6.67
-          height: 6.67
+          width: 7
+          height: 7
           radius: 999
           color: Theme.c.red
         }
       }
 
       Text {
-        width: parent.width - (root._is_crit ? 21.67 : 0)
+        width: parent.width - (root._is_crit ? 22 : 0)
         text: root.notif.summary
         color: Theme.c.white
         font.family: Theme.clock_font
@@ -219,14 +219,14 @@ Item {
     Item {
       visible: root.acts.length > 0 || root.notif.hasInlineReply
       width: parent.width
-      height: root.reply_mode ? 46.66 : Math.max(acts_row.implicitHeight,  root.notif.hasInlineReply
+      height: root.reply_mode ? 47 : Math.max(acts_row.implicitHeight,  root.notif.hasInlineReply
         ? 40 : 0)
       Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
 
       Row {
         id: acts_row
         spacing: 10
-        topPadding: 6.67
+        topPadding: 7
         opacity: root.reply_mode ? 0 : 1
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Motion.fast } }
@@ -239,7 +239,7 @@ Item {
             required property var modelData
             required property int index
 
-            height: 33.33
+            height: 33
             width: act_text.implicitWidth + 30
             radius: 999
             color: Theme.c.black
@@ -277,9 +277,9 @@ Item {
         y: acts_row.topPadding
         x: root.reply_mode ? 0 : (acts_row.width > 0 ? acts_row.width + acts_row.spacing : 0)
 
-        height: root.reply_mode ? 40 : 33.33
+        height: root.reply_mode ? 40 : 33
         width: root.reply_mode ? parent.width : reply_text.implicitWidth + 30
-        radius: root.reply_mode ? 6.67 : 20.08
+        radius: root.reply_mode ? 7 : 20
         color: Theme.c.black
         border.width: 1
         border.color: Theme.c.black2

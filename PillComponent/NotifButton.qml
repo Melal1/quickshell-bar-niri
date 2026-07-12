@@ -8,9 +8,9 @@ Rectangle {
   signal leftClicked()
 
   anchors.verticalCenter: parent.verticalCenter
-  width: 46.66
-  height: 46.66
-  radius: 23.33
+  width: 47
+  height: 47
+  radius: 23
   // color: notif_hover.containsMouse ? Theme.c.black : "transparent"
   color:"transparent"
   clip: true
@@ -43,7 +43,7 @@ Rectangle {
     y: inset - height / 2
     width: NotificationsServer.dnd ? diagonal : 0
     height: 5
-    radius: 1.67
+    radius: 2
     color: Theme.c.red
     rotation: 45
     transformOrigin: Item.Left

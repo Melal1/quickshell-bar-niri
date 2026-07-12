@@ -16,19 +16,41 @@ Item {
 
   enum Surfaces {
     None,
-    NotifCenter
+    NotifCenter,
+    Launcher,
+    Clipboard
   }
 
   property int active_surface: Pill.Surfaces.None
   readonly property bool notif_center_open: active_surface === Pill.Surfaces.NotifCenter
+  readonly property bool launcher_open: active_surface === Pill.Surfaces.Launcher
+  readonly property bool clipboard_open: active_surface === Pill.Surfaces.Clipboard
   readonly property bool is_surface: active_surface !== Pill.Surfaces.None
+  property bool surface_opened_from_idle: false
 
   function toggle_surface(s) {
     if (active_surface === s) {
-      active_surface = Pill.Surfaces.None;
+      close_surface();
     } else {
+      if (!is_surface) {
+        surface_opened_from_idle = !hovering && !_latched && !pinned;
+      }
       active_surface = s;
     }
+  }
+
+  function close_surface() {
+    active_surface = Pill.Surfaces.None;
+
+    if (surface_opened_from_idle) {
+      hovering = false;
+      _latched = false;
+      pinned = false;
+      suppress_hover = true;
+      _grace_timer.stop();
+    }
+
+    surface_opened_from_idle = false;
   }
 
   property bool suppress_hover: false
@@ -42,7 +64,9 @@ Item {
   })
 
   property var surface_dim: ({
-      [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20]
+      [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20],
+      [Pill.Surfaces.Launcher]: [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20],
+      [Pill.Surfaces.Clipboard]: [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20]
   })
 
   property bool hovering: false
@@ -70,7 +94,7 @@ Item {
 
   readonly property real morph_closeness: {
     const d = Math.max(Math.abs(width - target_w), Math.abs(height - target_h));
-    return 1 - Math.min(1, d / (183.33));
+    return 1 - Math.min(1, d / (183));
 
   }
 
@@ -92,7 +116,7 @@ Item {
   MouseArea {
     anchors.fill: parent
     onClicked: {
-      if (is_surface) active_surface = Pill.Surfaces.None;
+      if (is_surface) close_surface();
       else pill.pinned = !pill.pinned;
     }
     z: -1
@@ -149,7 +173,7 @@ Item {
 
       readonly property real rest_size: Settings.rest_h
       anchors.topMargin: (rest_size + (main.hover_mode ? rest_size * 0.2 : 0) - height) / 2
-      anchors.horizontalCenterOffset: main.media_active && !main.hover_mode ? 11.67 : 0
+      anchors.horizontalCenterOffset: main.media_active && !main.hover_mode ? 12 : 0
 
       Behavior on anchors.horizontalCenterOffset {
         NumberAnimation { duration: Motion.std; easing.type: Motion.std_ease }
@@ -186,7 +210,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       anchors.verticalCenterOffset: -1
       anchors.left: parent.left
-      anchors.leftMargin: 36.67
+      anchors.leftMargin: 37
       playing: main.playing
       paused: main.paused
       color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
@@ -273,7 +297,7 @@ Item {
       anchors.right: parent.right
       anchors.rightMargin: 25
       anchors.verticalCenter: parent.verticalCenter
-      spacing: 1.67
+      spacing: 2
       layoutDirection: Qt.RightToLeft
 
       opacity: main.hover_mode ? 1 : 0
@@ -416,7 +440,7 @@ Item {
     radius: 5
     color: Theme.c.red
     anchors.right: parent.right
-    anchors.rightMargin: 26.67
+    anchors.rightMargin: 27
     anchors.verticalCenter: parent.verticalCenter
     visible: pill.mode === Pill.Modes.Rest && NotificationsServer.unread && !NotificationsServer.dnd > 0 && !is_surface
     opacity: visible ? 1 : 0
@@ -426,5 +450,17 @@ Item {
   NotifCenterSurface {
     open: notif_center_open
     morph_closeness: pill.morph_closeness
+  }
+
+  Launcher {
+    open: launcher_open
+    morph_closeness: pill.morph_closeness
+    onRequest_close: pill.close_surface()
+  }
+
+  Clipboard {
+    open: clipboard_open
+    morph_closeness: pill.morph_closeness
+    onRequest_close: pill.close_surface()
   }
 }

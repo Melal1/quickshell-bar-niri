@@ -5,7 +5,6 @@ import Quickshell.Widgets
 import QtQuick.Layouts
 import Quickshell.Wayland
 import Quickshell.Io
-
 // import "Singletons"
 
 Scope {
@@ -55,7 +54,7 @@ Scope {
     MouseArea {
       anchors.fill: parent
       visible: pill.is_surface
-      onClicked: pill.active_surface = Pill.Surfaces.None
+      onClicked: pill.close_surface()
       z: -2
     }
 
@@ -66,7 +65,7 @@ Scope {
     FocusScope {
       anchors.fill: parent
       focus: pill.is_surface
-      Keys.onEscapePressed: pill.active_surface = Pill.Surfaces.None
+      Keys.onEscapePressed: pill.close_surface()
     }
 
     HoverHandler {
@@ -80,12 +79,13 @@ Scope {
 
     Pill {
       id: pill
-      scale:0.8
+      scale: 0.8
+      transformOrigin: Item.Top // fix the scale
 
       bar_win: main_win
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
-      anchors.topMargin: 0
+      anchors.topMargin: Settings.top_gap * parent.scale - 3
     }
   }
 
@@ -93,7 +93,7 @@ Scope {
     id: res_win
     readonly property real scale: 0.8
     readonly property real rest_h: Settings.rest_h * scale
-    readonly property int top_gap: Settings.top_gap * scale - 6
+    readonly property int top_gap: Settings.top_gap * scale - 5
     screen: res_screen_data
 
     visible: res_screen_data !== null && res_screen_data.name === Settings.screen_name
@@ -105,7 +105,7 @@ Scope {
 
     exclusionMode: ExclusionMode.Normal
     aboveWindows: true
-    exclusiveZone: rest_h + top_gap
+    exclusiveZone: ( rest_h + top_gap  )
 
     color: "transparent"
     Region {
@@ -123,8 +123,11 @@ Scope {
       } else if (name === "launcher" || name === "\"launcher\"") {
         console.log("Toggling launcher surface");
         pill.toggle_surface(Pill.Surfaces.Launcher);
+      } else if (name === "clipboard" || name === "\"clipboard\"") {
+        console.log("Toggling clipboard surface");
+        pill.toggle_surface(Pill.Surfaces.Clipboard);
       } else if (name === "hide") {
-        pill.active_surface = Pill.Surfaces.None;
+        pill.close_surface();
       }
     }
   }

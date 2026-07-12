@@ -38,7 +38,7 @@ Item {
       width: tray.width
       height: tray.height
       color: tray.body_color
-      radius: tray.radius - 3.33
+      radius: tray.radius - 3
       opacity: !tray_hover.hovered ? 1 : 0
       Behavior on opacity {
         NumberAnimation { duration: Motion.std }
@@ -52,8 +52,8 @@ Item {
       }
     }
 
-    implicitWidth: Math.min(systray.implicitWidth + 21.67, max_w)
-    implicitHeight: systray.implicitHeight + 11.67
+    implicitWidth: Math.min(systray.implicitWidth + 22, max_w)
+    implicitHeight: systray.implicitHeight + 12
     anchors.fill: parent
     radius: 15
     clip: true
@@ -64,7 +64,7 @@ Item {
 
     Flickable {
       anchors.fill: parent
-      anchors.leftMargin: 6.67
+      anchors.leftMargin: 7
 
       contentWidth: systray.implicitWidth
       contentHeight: parent.height

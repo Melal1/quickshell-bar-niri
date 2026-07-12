@@ -16,12 +16,14 @@ Singleton {
   readonly property int top_gap: 8
   readonly property int round_rad: 40
   readonly property int less_round_rad: 42
-  readonly property string prayer_t_path: "/.cache/salawat/athan_cache1.json"
+  readonly property string prayer_t_path: "/.cache/salawat/athan_cache.json"
   readonly property int prayer_alert_before: 10
   readonly property int popup_w : 666
   readonly property int notifcenter_w: 664
   readonly property int notifcenter_h: 833
-  readonly property int launcher_w: 500
-  readonly property int launcher_h: 600
+  readonly property int launcher_w: 600
+  readonly property int launcher_h: 700
+  readonly property int clipboard_w: 500
+  readonly property int clipboard_h: 600
 
 }

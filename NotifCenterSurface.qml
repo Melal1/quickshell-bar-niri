@@ -47,6 +47,7 @@ PillSurface {
     Text {
       anchors.left: parent.left
       anchors.verticalCenter: parent.verticalCenter
+      anchors.verticalCenterOffset: 7
       text: "Notifications"
       color: Theme.c.fg
       font.bold: true

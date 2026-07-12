@@ -141,7 +141,7 @@ Item {
       Column {
         id: controls_col
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset:-3.67
+        anchors.verticalCenterOffset:-4
         width: parent.width
         opacity: info.opacity > 0.3 ? 0 :1
         Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -150,7 +150,7 @@ Item {
 
         Row {
           anchors.horizontalCenter: parent.horizontalCenter
-          spacing: 23.33
+          spacing: 23
 
           Text {
             readonly property bool active: (Player.player && Player.player.canGoPrevious)
