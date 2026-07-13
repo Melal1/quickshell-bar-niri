@@ -134,6 +134,7 @@ PillSurface {
       id: clear_btn
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
+      anchors.verticalCenterOffset: 3
       width: clear_text.implicitWidth + 24
       height: 34
       radius: 19

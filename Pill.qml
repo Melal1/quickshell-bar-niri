@@ -18,13 +18,15 @@ Item {
     None,
     NotifCenter,
     Launcher,
-    Clipboard
+    Clipboard,
+    Power
   }
 
   property int active_surface: Pill.Surfaces.None
   readonly property bool notif_center_open: active_surface === Pill.Surfaces.NotifCenter
   readonly property bool launcher_open: active_surface === Pill.Surfaces.Launcher
   readonly property bool clipboard_open: active_surface === Pill.Surfaces.Clipboard
+  readonly property bool power_open: active_surface === Pill.Surfaces.Power
   readonly property bool is_surface: active_surface !== Pill.Surfaces.None
   property bool surface_opened_from_idle: false
 
@@ -60,13 +62,13 @@ Item {
       [Pill.Modes.Hover]: [Settings.hover_w, Settings.hover_h,Settings.round_rad - 20 ],
       [Pill.Modes.Osd]: [Settings.osd_w, Settings.osd_h,Settings.round_rad],
       [Pill.Modes.NotifPopup]: [Settings.popup_w, pop_loader.item ? pop_loader.item.implicitHeight + 25 : Settings.rest_h,Settings.round_rad - 20 ],
-      [Pill.Modes.None]: [0,0,0 ]
   })
 
   property var surface_dim: ({
       [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20],
       [Pill.Surfaces.Launcher]: [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20],
-      [Pill.Surfaces.Clipboard]: [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20]
+      [Pill.Surfaces.Clipboard]: [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20],
+      [Pill.Surfaces.Power]: [power_loader.item ? power_loader.item.implicitWidth + 40 : 350, Settings.power_menu_h, Settings.round_rad - 20]
   })
 
   property bool hovering: false
@@ -479,6 +481,7 @@ Item {
   NotifCenterSurface {
     open: notif_center_open
     morph_closeness: pill.morph_closeness
+    onRequest_close: pill.close_surface()
   }
 
   Launcher {
@@ -491,5 +494,16 @@ Item {
     open: clipboard_open
     morph_closeness: pill.morph_closeness
     onRequest_close: pill.close_surface()
+  }
+  Loader {
+    id: power_loader
+    anchors.fill:parent
+    active:power_open
+    sourceComponent: Power {
+      open:parent.active
+      morph_closeness: pill.morph_closeness
+      onRequest_close: pill.close_surface()
+    }
+
   }
 }

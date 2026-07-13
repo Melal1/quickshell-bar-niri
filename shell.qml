@@ -126,6 +126,9 @@ Scope {
       } else if (name === "clipboard" || name === "\"clipboard\"") {
         console.log("Toggling clipboard surface");
         pill.toggle_surface(Pill.Surfaces.Clipboard);
+      }else if(name === "power") {
+        pill.toggle_surface(Pill.Surfaces.Power);
+
       } else if (name === "hide") {
         pill.close_surface();
       }
