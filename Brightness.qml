@@ -16,11 +16,6 @@ Singleton {
   property bool current_loaded: false
   property bool max_loaded: false
 
-  function refresh() {
-    current_file.reload()
-    max_file.reload()
-  }
-
   function update_available() {
     available = current_loaded && max_loaded && maximum > 0
   }
@@ -63,11 +58,4 @@ Singleton {
     }
   }
 
-  Timer {
-    interval: 2000
-    running: true
-    repeat: true
-    triggeredOnStart: true
-    onTriggered: root.refresh()
-  }
 }

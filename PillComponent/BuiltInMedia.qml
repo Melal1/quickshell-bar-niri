@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Widgets
 import "../"
 
 Item {
@@ -41,32 +42,24 @@ Item {
     anchors.verticalCenterOffset: -1
     anchors.left: parent.left
 
-    Image {
+    ClippingWrapperRectangle {
       id: cover
-      anchors.verticalCenter: parent.verticalCenter
-      height: Settings.hover_h * 0.6
-      width: height
-      readonly property string unk: "../Assests/UnkownTrack.jpg"
+      radius: 10
       anchors.left: parent.left
       anchors.leftMargin: 25
-      source: {
-        if (!Player.player) return unk;
-        if (Settings.ignore_mpd_mpris_art && Player.player.desktopEntry === "mpd-mpris") return unk;
-        if (Player.player.trackArtUrl === "") return unk;
-        return Player.player.trackArtUrl;
-      }
-      fillMode: Image.PreserveAspectCrop
-    }
-
-    Rectangle {
-      anchors.centerIn: cover
-      width: cover.width + 10
-      height: cover.width + 10
-      color: "transparent"
-      border.width: 5
-      border.color: Theme.c.bg
-      radius: width / 5
-    }
+      anchors.verticalCenter: parent.verticalCenter
+      implicitWidth: Settings.hover_h * 0.6
+      implicitHeight: this.implicitWidth
+      Image {
+        readonly property string unk: "../Assests/UnkownTrack.jpg"
+        source: {
+          if (!Player.player) return unk;
+          if (Settings.ignore_mpd_mpris_art && Player.player.desktopEntry === "mpd-mpris") return unk;
+          if (Player.player.trackArtUrl === "") return unk;
+          return Player.player.trackArtUrl;
+        }
+        fillMode: Image.PreserveAspectCrop
+      } }
 
     Item {
       id: info_container

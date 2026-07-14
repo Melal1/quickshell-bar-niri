@@ -23,8 +23,7 @@ PillSurface {
 
   function execute_cmd(cmd) {
     request_close()
-    // Quickshell.execDetached(["sh", "-c", cmd]);
-    console.log("Running " + cmd)
+    Quickshell.execDetached(["sh", "-c", cmd]);
   }
 
   function move(delta) {

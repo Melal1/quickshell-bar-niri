@@ -27,5 +27,6 @@ Singleton {
   readonly property int clipboard_w: 760
   readonly property int clipboard_h: 640
   readonly property int power_menu_h:220
+  readonly property real surface_opacity: 1
 
 }

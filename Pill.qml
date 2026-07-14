@@ -62,13 +62,15 @@ Item {
       [Pill.Modes.Hover]: [Settings.hover_w, Settings.hover_h,Settings.round_rad - 20 ],
       [Pill.Modes.Osd]: [Settings.osd_w, Settings.osd_h,Settings.round_rad],
       [Pill.Modes.NotifPopup]: [Settings.popup_w, pop_loader.item ? pop_loader.item.implicitHeight + 25 : Settings.rest_h,Settings.round_rad - 20 ],
+      [Pill.Modes.None]: [0,0,0]
   })
 
   property var surface_dim: ({
       [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20],
       [Pill.Surfaces.Launcher]: [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20],
       [Pill.Surfaces.Clipboard]: [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20],
-      [Pill.Surfaces.Power]: [power_loader.item ? power_loader.item.implicitWidth + 100 : 350, Settings.power_menu_h, Settings.round_rad - 20]
+      [Pill.Surfaces.Power]: [power_loader.item ? power_loader.item.implicitWidth + 100 : 350, Settings.power_menu_h, Settings.round_rad - 20],
+      [Pill.Surfaces.None]: [0,0,0]
   })
 
   property bool hovering: false
@@ -168,9 +170,9 @@ Item {
       NumberAnimation { duration: Motion.std}
     }
     duration: notif_on_surface ? 1500 : 3000
-    body_color: Theme.c.bg
-    top_color:notif_on_surface? Theme.c.red2 : Theme.c.black2
-    bottom_color: notif_on_surface  ? Theme.c.red : Theme.c.black
+    body_color: Qt.alpha(Theme.c.bg, Settings.surface_opacity)
+    top_color:notif_on_surface? Qt.alpha(Theme.c.red2 , Settings.surface_opacity): Qt.alpha(Theme.c.black2,Settings.surface_opacity)
+    bottom_color: notif_on_surface  ? Qt.alpha(Theme.c.red,Settings.surface_opacity) : Qt.alpha(Theme.c.black,Settings.surface_opacity)
 
     border_w: notif_on_surface ? 5 :hover_mode || is_surface  ? 3 : osd_mode ? 2 : 1
     running: hover_mode || osd_mode || is_surface
