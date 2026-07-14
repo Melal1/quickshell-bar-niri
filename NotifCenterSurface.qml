@@ -6,13 +6,15 @@ import QtQuick
 */
 PillSurface {
   id: center
+  focus: true
 
-  m_top: 12
-  m_left: 16
-  m_right: 16
-  m_bottom: 12
+  m_top: 15
+  m_left: 17
+  m_right: 17
+  m_bottom: 14
 
   property bool grouped_view: false
+  property bool clear_holding: false
   property var expanded_groups: ({})
   property var current_time: Date.now()
 
@@ -25,6 +27,7 @@ PillSurface {
 
   onOpenChanged: {
     if (open) {
+      center.forceActiveFocus();
       center.current_time = Date.now();
       NotificationsServer.suppress_popups = true;
       NotificationsServer.mark_all_seen();
@@ -33,126 +36,120 @@ PillSurface {
     } else {
       NotificationsServer.suppress_popups = false;
       center.expanded_groups = ({});
+      center.clear_holding = false;
     }
   }
 
-  // ── Header ──
-  Item {
+  Keys.onPressed: (event) => {
+    if (event.key === Qt.Key_Escape) {
+      center.request_close();
+      event.accepted = true;
+      return;
+    }
+
+    if (event.modifiers === Qt.NoModifier && event.key === Qt.Key_G && !event.isAutoRepeat) {
+      center.grouped_view = !center.grouped_view;
+      event.accepted = true;
+      return;
+    }
+
+    if (event.modifiers === Qt.NoModifier && event.key === Qt.Key_C && NotificationsServer.history.length > 0) {
+      center.clear_holding = true;
+      event.accepted = true;
+    }
+  }
+
+  Keys.onReleased: (event) => {
+    if (event.key === Qt.Key_C) {
+      center.clear_holding = false;
+      event.accepted = true;
+    }
+  }
+
+  SurfaceHeader {
     id: header
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
-    height: 36
-
-    Text {
-      anchors.left: parent.left
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.verticalCenterOffset: 7
-      text: "Notifications"
-      color: Theme.c.fg
-      font.bold: true
-      font.pixelSize: 22
-    }
+    height: 34
+    title: "Notifications"
+    detail: ""
 
     Rectangle {
       id: view_toggle
       anchors.centerIn: parent
-      width: toggle_row.implicitWidth + 19
-      height: 34
-      radius: 10
-      color: Theme.c.black
-      Rectangle {
-        id: indicator
-        anchors.verticalCenter: parent.verticalCenter
-        x: toggle_row.x + (center.grouped_view ? grp_text.x : chr_text.x) - 8
-        width: toggle_row.tab_w + 13
-        height: 28
+      width: view_text.implicitWidth + 28
+      height: 28
+      radius: 14
+      color: view_area.containsMouse ? Theme.c.magenta : Theme.c.black
+      anchors.verticalCenterOffset: 1
 
-        color: Theme.c.magenta
-        radius: 6
-        Behavior on x {
-          NumberAnimation { duration: Motion.fast; easing.type: Easing.InOutQuad }
-        }
+      Behavior on width {
+        NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
       }
-      Row {
-        id: toggle_row
-        anchors.centerIn: parent
-        spacing: 16
-
-        property int tab_w: Math.max(grp_text.implicitWidth, chr_text.implicitWidth)
-        Text {
-          id: grp_text
-          width: toggle_row.tab_w
-          horizontalAlignment: Text.AlignHCenter
-
-          anchors.verticalCenter: parent.verticalCenter
-          anchors.verticalCenterOffset: 2
-          text: "Grouped"
-          color: center.grouped_view ? Theme.c.bg : Theme.c.black2
-          font.pixelSize: 13
-          font.bold: true
-
-          Behavior on color {
-            ColorAnimation { duration: Motion.fast }
-          }
-          MouseArea {
-            anchors.fill: parent
-            anchors.margins: -5
-
-            cursorShape: Qt.PointingHandCursor
-            onClicked: center.grouped_view = true
-          }
-        }
-
-        Text {
-          id: chr_text
-          width: toggle_row.tab_w
-          horizontalAlignment: Text.AlignHCenter
-
-          anchors.verticalCenter: parent.verticalCenter
-          anchors.verticalCenterOffset: 2
-          text: "All"
-          color: !center.grouped_view ? Theme.c.bg : Theme.c.black2
-          font.pixelSize: 14
-          font.bold: true
-
-          Behavior on color {
-            ColorAnimation { duration: Motion.fast }
-          }
-          MouseArea {
-            anchors.fill: parent
-            anchors.margins: -5
-            cursorShape: Qt.PointingHandCursor
-            onClicked: center.grouped_view = false
-          }
-        }
-      }
-    }
-
-    // Clear All
-    Rectangle {
-      id: clear_btn
-      anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.verticalCenterOffset: 3
-      width: clear_text.implicitWidth + 24
-      height: 34
-      radius: 19
-      color: clear_area.containsMouse ? Theme.c.red : Theme.c.black
-      visible: NotificationsServer.history.length > 0
-
       Behavior on color {
         ColorAnimation { duration: Motion.fast }
       }
-      Behavior on opacity {
-        NumberAnimation { duration: Motion.fast }
+
+      Text {
+        id: view_text
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: 3
+        text: center.grouped_view ? "Grouped" : "All"
+        color: view_area.containsMouse ? Theme.c.bg : Theme.c.black2
+        font.pixelSize: 13
+        font.bold: true
+
+        Behavior on color {
+          ColorAnimation { duration: Motion.fast }
+        }
+      }
+
+      MouseArea {
+        id: view_area
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: center.grouped_view = !center.grouped_view
+      }
+    }
+
+    HoldButton {
+      id: clear_btn
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
+      width: clear_text.implicitWidth + 24
+      height: 28
+      radius: 14
+      outer_color: clear_area.containsMouse ? Qt.alpha(Theme.c.red, 0.18) : Theme.c.black
+      border_color: clear_area.containsMouse || clear_area.pressed || center.clear_holding ? Theme.c.red : Theme.c.black2
+      border_w: 1
+      is_holding: clear_area.pressed || center.clear_holding
+      visible: NotificationsServer.history.length > 0
+      fill_gradient: Gradient {
+        GradientStop { position: 0.0; color: Qt.alpha(Theme.c.red2, 0.78) }
+        GradientStop { position: 1.0; color: Theme.c.red }
+      }
+
+      onFinished: {
+        center.clear_holding = false;
+        NotificationsServer.clear_all();
+      }
+
+      Behavior on outer_color {
+        ColorAnimation { duration: Motion.fast }
+      }
+      Behavior on border_color {
+        ColorAnimation { duration: Motion.fast }
       }
 
       Text {
         id: clear_text
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: 3
+
         text: "Clear all"
-        color: clear_area.containsMouse ? Theme.c.bg : Theme.c.black2
+        color: clear_area.pressed || center.clear_holding ? Theme.c.fg : (clear_area.containsMouse ? Theme.c.red2 : Theme.c.black2)
         font.pixelSize: 13
         font.bold: true
 
@@ -166,7 +163,6 @@ PillSurface {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: NotificationsServer.clear_all()
       }
 
       scale: clear_area.pressed ? 0.92 : 1.0
@@ -176,13 +172,12 @@ PillSurface {
     }
   }
 
-  // ── Separator ──
   Rectangle {
     id: sep
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: header.bottom
-    anchors.topMargin: 10
+    anchors.topMargin: 12
     height: 1
     color: Theme.c.black2
     opacity: 0.5

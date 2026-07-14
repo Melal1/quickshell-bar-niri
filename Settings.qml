@@ -26,7 +26,6 @@ Singleton {
   readonly property int launcher_h: 700
   readonly property int clipboard_w: 760
   readonly property int clipboard_h: 640
-  readonly property int power_menu_w:600
-  readonly property int power_menu_h:140
+  readonly property int power_menu_h:220
 
 }

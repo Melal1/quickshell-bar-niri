@@ -10,10 +10,10 @@ import "lib/fuzzy.js" as Fuzzy
 PillSurface {
   id: root
 
-  m_top: 16
-  m_left: 18
-  m_right: 18
-  m_bottom: 16
+  m_top: 15
+  m_left: 17
+  m_right: 17
+  m_bottom: 14
 
   property string query: ""
   property int selected_index: 0
@@ -28,6 +28,8 @@ PillSurface {
   readonly property string web_shortcuts_file: Quickshell.env("HOME") + "/.config/quickshell/launcher-web-shortcuts.json"
   readonly property string calc_input: calc_mode ? query : ""
   readonly property var calc_result: calc_mode ? Calc.evaluate(calc_input) : ({ ok: false, display: "", detail: "", copy: "" })
+  readonly property string surface_title: root.calc_mode ? "Calc" : (root.web_prompt_mode && root.web_prompt_entry ? root.web_prompt_entry.name : "Apps")
+  readonly property string surface_detail: root.calc_mode ? "Enter copies" : (root.web_prompt_mode ? "Enter opens" : root.results.length + " / " + root.total_count)
   readonly property var all_entries: {
     var src = DesktopEntries.applications.values;
     var out = [];
@@ -204,33 +206,13 @@ PillSurface {
     root.load_web_shortcuts();
   }
 
-  Item {
+  SurfaceHeader {
     id: header
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
-    height: 60
-
-    Text {
-      id: title
-      anchors.left: parent.left
-      anchors.verticalCenter: parent.verticalCenter
-      text: root.calc_mode ? "Calc" : (root.web_prompt_mode && root.web_prompt_entry ? root.web_prompt_entry.name : "Apps")
-      color: Theme.c.fg
-      font.family: Theme.clock_font
-      font.pixelSize: 28
-      font.bold: true
-    }
-
-    Text {
-      anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
-      text: root.calc_mode ? "Enter copies" : (root.web_prompt_mode ? "Enter opens" : root.results.length + " / " + root.total_count)
-      color: Theme.c.black2
-      font.family: Theme.clock_font
-      font.pixelSize: 20
-      font.bold: true
-    }
+    title: root.surface_title
+    detail: root.surface_detail
   }
 
   Rectangle {
@@ -238,8 +220,9 @@ PillSurface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: header.bottom
-    height: 55
-    radius: 14
+    anchors.topMargin: 12
+    height: 50
+    radius: 13
     color: Theme.c.black
     border.width: search_field.activeFocus ? 2 : 1
     border.color: search_field.activeFocus ? Theme.c.cyan : Theme.c.black2
@@ -257,7 +240,7 @@ PillSurface {
       text: root.calc_mode ? "=" : (root.web_prompt_mode ? "?" : "⌕")
       color: Theme.c.black2
       font.family: Theme.clock_font
-      font.pixelSize: 27
+      font.pixelSize: 24
       font.bold: true
     }
 
@@ -277,7 +260,7 @@ PillSurface {
       placeholderText: root.web_prompt_mode && root.web_prompt_entry ? "Query for " + root.web_prompt_entry.name : "Search apps"
       placeholderTextColor: Theme.c.black2
       font.family: Theme.clock_font
-      font.pixelSize: 23
+      font.pixelSize: 21
 
       onTextChanged: {
         if (!root.calc_mode && text.charAt(0) === "=") {
@@ -347,10 +330,10 @@ PillSurface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: search_box.bottom
-    anchors.topMargin: 20
-    height: 2
+    anchors.topMargin: 12
+    height: 1
     color: Theme.c.black2
-    opacity: 0.8
+    opacity: 0.45
   }
 
   Text {
@@ -368,7 +351,7 @@ PillSurface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: sep.bottom
-    anchors.topMargin: 20
+    anchors.topMargin: 10
     anchors.bottom: parent.bottom
     visible: root.calc_mode || root.web_prompt_mode
 
@@ -427,7 +410,7 @@ PillSurface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: sep.bottom
-    anchors.topMargin: 20
+    anchors.topMargin: 10
     anchors.bottom: parent.bottom
     clip: true
     spacing: 6

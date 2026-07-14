@@ -8,10 +8,10 @@ import Quickshell.Io
 PillSurface {
   id: root
 
-  m_top: 18
-  m_left: 20
-  m_right: 20
-  m_bottom: 18
+  m_top: 15
+  m_left: 17
+  m_right: 17
+  m_bottom: 14
 
   property string query: ""
   property int selected_index: 0
@@ -249,12 +249,19 @@ PillSurface {
   ColumnLayout {
     anchors.fill: parent
     clip: true
-    spacing: 14
+    spacing: 10
+
+    SurfaceHeader {
+      Layout.fillWidth: true
+      title: "Clipboard"
+      detail: root.results.length + " / " + Cliphist.count
+      font_family: root.font_family
+    }
 
     RowLayout {
       id: header_row
       Layout.fillWidth: true
-      Layout.preferredHeight: 66
+      Layout.preferredHeight: 50
       spacing: 12
 
       TextField {
@@ -364,7 +371,7 @@ PillSurface {
     ColumnLayout {
       id: sub_header
       Layout.fillWidth: true
-      spacing: 9
+      spacing: 8
 
       RowLayout {
         Layout.fillWidth: true
@@ -374,26 +381,29 @@ PillSurface {
           text: String(root.results.length)
           color: root.selected_color
           font.family: root.font_family
-          font.pixelSize: 22
+          font.pixelSize: 18
           font.bold: true
         }
 
         Text {
-          text: "Items"
+          text: filter_combo.displayText
           color: Theme.c.fg
           font.family: root.font_family
-          font.pixelSize: 22
+          font.pixelSize: 18
           font.bold: true
         }
 
         Item { Layout.fillWidth: true }
 
         Text {
-          text: root.results.length + " / " + Cliphist.count
+          Layout.maximumWidth: 260
+          text: root.selected_item ? root.subtitle(root.selected_item) : ""
           color: root.secondary_text
           font.family: root.font_family
-          font.pixelSize: 16
+          font.pixelSize: 14
           font.bold: true
+          horizontalAlignment: Text.AlignRight
+          elide: Text.ElideRight
         }
       }
 

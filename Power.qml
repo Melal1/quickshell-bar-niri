@@ -6,6 +6,11 @@ import Quickshell.Widgets
 PillSurface {
   id:root
   focus:true
+  m_top: 15
+  m_left: 17
+  m_right: 17
+  m_bottom: 40
+
   property int active_index: 0
   property bool holding : false
   property var acts: [
@@ -14,7 +19,7 @@ PillSurface {
   {label: "Sleep",    icon: "moon",     hold: false, cmd: "systemctl suspend"}
   ]
   property var current_act: acts[active_index]
-  implicitWidth: row.implicitWidth
+  implicitWidth: Math.max(row.implicitWidth, header.implicitWidth)
 
   function execute_cmd(cmd) {
     request_close()
@@ -42,6 +47,7 @@ PillSurface {
     }
   }
 
+  Keys.onEscapePressed: pill.close_surface()
   Keys.onPressed: (e) => {
     if(e.key === Qt.Key_Enter || e.key === Qt.Key_Return )
     {
@@ -78,15 +84,21 @@ PillSurface {
   }
 
   ColumnLayout {
-    spacing:2
+    spacing:12
     anchors.fill:parent
-    anchors.bottomMargin: 20
-    anchors.topMargin: 20
+
+    SurfaceHeader {
+      id: header
+      Layout.fillWidth: true
+      title: "Power"
+      detail: root.current_act.hold ? "Hold required" : "Enter opens"
+    }
 
     RowLayout {
       id:row
       spacing: 12
       Layout.alignment: Qt.AlignCenter
+      Layout.topMargin: 2
 
       Repeater {
         model: root.acts
@@ -96,13 +108,13 @@ PillSurface {
           Layout.preferredWidth: 70
 
           is_holding: modelData.hold && ((root.active_index === index && root.holding) || mouse.pressed)
-          border_color: Theme.c.cyan
+          border_color: Theme.c.white
           outer_color: root.active_index === index  ?  Qt.alpha(Theme.c.black2,0.3) : Theme.c.bg
           border_w:1
 
           fill_gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.alpha(Theme.c.magenta2, 0.7) }
-            GradientStop { position: 1.0; color: Theme.c.magenta }
+            GradientStop { position: 0.0; color: Qt.alpha(Theme.c.black2, 0.8) }
+            GradientStop { position: 1.0; color: Theme.c.white }
           }
 
           onFinished: {
@@ -113,9 +125,14 @@ PillSurface {
             anchors.centerIn: parent
             width: 30
             height: 30
-            stroke:2
+            stroke:root.active_index === index ? 4 :2
             name: modelData.icon
-            color: root.active_index === index ? Theme.c.yellow : Theme.c.fg
+            Behavior on stroke {
+              NumberAnimation {
+                duration:300
+              }
+            }
+            color: root.active_index === index ? Theme.c.red : Theme.c.fg
           }
 
           MouseArea {
@@ -140,9 +157,11 @@ PillSurface {
     Text {
       Layout.alignment: Qt.AlignHCenter
       Layout.preferredHeight: 22
-      text: current_act.label + (current_act.hold ? " - hold required" : "")
+      text: root.current_act.label
       font.pixelSize: 20
-      color: Theme.c.fg
+      font.bold: root.current_act.hold
+      color:Theme.c.white
+
     }
   }
 }

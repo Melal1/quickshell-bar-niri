@@ -68,7 +68,7 @@ Item {
       [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20],
       [Pill.Surfaces.Launcher]: [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20],
       [Pill.Surfaces.Clipboard]: [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20],
-      [Pill.Surfaces.Power]: [power_loader.item ? power_loader.item.implicitWidth + 40 : 350, Settings.power_menu_h, Settings.round_rad - 20]
+      [Pill.Surfaces.Power]: [power_loader.item ? power_loader.item.implicitWidth + 100 : 350, Settings.power_menu_h, Settings.round_rad - 20]
   })
 
   property bool hovering: false
@@ -169,7 +169,7 @@ Item {
     }
     duration: notif_on_surface ? 1500 : 3000
     body_color: Theme.c.bg
-    top_color:notif_on_surface? Theme.c.red2 : Theme.c.fg
+    top_color:notif_on_surface? Theme.c.red2 : Theme.c.black2
     bottom_color: notif_on_surface  ? Theme.c.red : Theme.c.black
 
     border_w: notif_on_surface ? 5 :hover_mode || is_surface  ? 3 : osd_mode ? 2 : 1
