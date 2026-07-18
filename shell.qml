@@ -129,6 +129,15 @@ Scope {
       }else if(name === "power") {
         pill.toggle_surface(Pill.Surfaces.Power);
 
+      } else if (name === "bluetooth" || name === "\"bluetooth\"") {
+        pill.toggle_surface(Pill.Surfaces.Bluetooth);
+
+      } else if (name === "link" || name === "\"link\"" || name === "connectivity" || name === "\"connectivity\"") {
+        pill.toggle_surface(Pill.Surfaces.Link);
+
+      } else if (name === "network" || name === "\"network\"" || name === "wifi" || name === "\"wifi\"") {
+        pill.toggle_surface(Pill.Surfaces.Network);
+
       } else if (name === "hide") {
         pill.close_surface();
       }

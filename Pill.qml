@@ -19,7 +19,10 @@ Item {
     NotifCenter,
     Launcher,
     Clipboard,
-    Power
+    Power,
+    Bluetooth,
+    Link,
+    Network
   }
 
   property int active_surface: Pill.Surfaces.None
@@ -27,8 +30,21 @@ Item {
   readonly property bool launcher_open: active_surface === Pill.Surfaces.Launcher
   readonly property bool clipboard_open: active_surface === Pill.Surfaces.Clipboard
   readonly property bool power_open: active_surface === Pill.Surfaces.Power
+  readonly property bool bluetooth_open: active_surface === Pill.Surfaces.Bluetooth
+  readonly property bool link_open: active_surface === Pill.Surfaces.Link
+  readonly property bool network_open: active_surface === Pill.Surfaces.Network
   readonly property bool is_surface: active_surface !== Pill.Surfaces.None
   property bool surface_opened_from_idle: false
+
+  /**
+  * The surface that was open immediately before the current one. Saved when
+  * `toggle_surface` opens a new surface while another is already up, and
+  * consumed by `close_surface(restore_previous = true)` (called from each
+  * surface's Esc handler) to bounce the user back to the parent surface —
+  * e.g. closing Network returns to Link. Cleared whenever a surface is
+  * fully closed (e.g. clicking outside the pill, or Esc with no parent).
+  */
+  property int previous_surface: Pill.Surfaces.None
 
   function toggle_surface(s) {
     if (active_surface === s) {
@@ -36,15 +52,22 @@ Item {
     } else {
       if (!is_surface) {
         surface_opened_from_idle = !hovering && !_latched && !pinned;
+        previous_surface = Pill.Surfaces.None;
+      } else {
+        previous_surface = active_surface;
       }
       active_surface = s;
     }
   }
 
-  function close_surface() {
-    active_surface = Pill.Surfaces.None;
+  function close_surface(restore_previous) {
+    if (restore_previous === undefined) restore_previous = false;
+    var return_to = restore_previous && previous_surface !== Pill.Surfaces.None ? previous_surface : Pill.Surfaces.None;
 
-    if (surface_opened_from_idle) {
+    active_surface = return_to;
+    previous_surface = Pill.Surfaces.None;
+
+    if (return_to === Pill.Surfaces.None && surface_opened_from_idle) {
       hovering = false;
       _latched = false;
       pinned = false;
@@ -65,13 +88,17 @@ Item {
       [Pill.Modes.None]: [0,0,0]
   })
 
-  property var surface_dim: ({
-      [Pill.Surfaces.NotifCenter]: [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20],
-      [Pill.Surfaces.Launcher]: [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20],
-      [Pill.Surfaces.Clipboard]: [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20],
-      [Pill.Surfaces.Power]: [power_loader.item ? power_loader.item.implicitWidth + 100 : 350, Settings.power_menu_h, Settings.round_rad - 20],
-      [Pill.Surfaces.None]: [0,0,0]
-  })
+  function surface_dim_for(s) {
+    if (s === Pill.Surfaces.None) return [0, 0, 0];
+    if (s === Pill.Surfaces.NotifCenter) return [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20];
+    if (s === Pill.Surfaces.Launcher) return [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20];
+    if (s === Pill.Surfaces.Clipboard) return [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20];
+    if (s === Pill.Surfaces.Power) return [power_loader.item ? power_loader.item.implicitWidth + 100 : 350, Settings.power_menu_h, Settings.round_rad - 20];
+    if (s === Pill.Surfaces.Bluetooth) return [Settings.bluetooth_w, Settings.bluetooth_h, Settings.round_rad - 20];
+    if (s === Pill.Surfaces.Link) return [Settings.link_w, link ? link.dynamic_height + 10 : 240, Settings.round_rad - 20];
+    if (s === Pill.Surfaces.Network) return [Settings.network_w, Settings.network_h, Settings.round_rad - 20];
+    return [0, 0, 0];
+  }
 
   property bool hovering: false
   property bool pinned: false
@@ -112,7 +139,7 @@ Item {
     return Pill.Modes.Rest
   }
 
-  readonly property var active_dim: (is_surface ) ? surface_dim[active_surface] : modes_dim[mode]
+  readonly property var active_dim: (is_surface ) ? surface_dim_for(active_surface) : modes_dim[mode]
   readonly property real target_w: active_dim[0]
   readonly property real target_h: active_dim[1]
 
@@ -373,8 +400,8 @@ Item {
 
       value: brightness_osd ? Brightness.value : Audio.volume
       disabled: brightness_osd ? !Brightness.available : Audio.is_muted
-      active_col: brightness_osd ? Theme.c.yellow : "#8B8888"
-      muted_col: brightness_osd ? Theme.c.black2 : "#4A4A4A"
+      active_col: brightness_osd ? Theme.c.yellow : Theme.c.blue
+      muted_col: Theme.c.black2 
       icon: brightness_osd ? "☀" : Audio.is_muted ? "󰖁"
       : Audio.volume < 0.33 ? "󰕿"
       : Audio.volume < 0.66 ? "󰖀"
@@ -507,5 +534,24 @@ Item {
       onRequest_close: pill.close_surface()
     }
 
+  }
+
+  BluetoothSurface {
+    open: bluetooth_open
+    morph_closeness: pill.morph_closeness
+    onRequest_close: pill.close_surface(true)
+  }
+
+  Link {
+    id: link
+    open: link_open
+    morph_closeness: pill.morph_closeness
+    onRequest_close: pill.close_surface()
+  }
+
+  NetworkSurface {
+    open: network_open
+    morph_closeness: pill.morph_closeness
+    onRequest_close: pill.close_surface(true)
   }
 }

@@ -27,6 +27,11 @@ Singleton {
   readonly property int clipboard_w: 760
   readonly property int clipboard_h: 640
   readonly property int power_menu_h:220
+  readonly property int bluetooth_w: 500
+  readonly property int bluetooth_h: 560
+  readonly property int link_w: 480
+  readonly property int network_w: 500
+  readonly property int network_h: 560
   readonly property real surface_opacity: 1
 
 }

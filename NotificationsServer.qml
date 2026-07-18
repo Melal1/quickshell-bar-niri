@@ -16,10 +16,30 @@ Singleton {
   property var popups: []
   property var seen_ids: ({})
 
+  /**
+  * Generic per-surface notification filter. Surfaces register a named group
+  * of desktop entry IDs at startup with `register_filter`, then call
+  * `set_filter_active` to flip the suppression on/off as the surface opens
+  * and closes. The `onNotification` handler below checks every active group
+  * against the incoming notification's `desktopEntry` and silently expires
+  * matches before they reach history or popups.
+  */
+  property var suppressed_groups: ({})
+
+  function register_filter(name, ids) {
+    suppressed_groups[name] = { enabled: false, ids: ids };
+  }
+
+  function set_filter_active(name, active) {
+    var g = suppressed_groups[name];
+    if (g)
+    g.enabled = active;
+  }
+
   readonly property int unread: {
     var u = 0;
     for (var i = 0; i < history.length; i++)
-      if (!seen_ids[history[i].id]) u++;
+    if (!seen_ids[history[i].id]) u++;
     return u;
   }
 
@@ -136,7 +156,26 @@ Singleton {
     inlineReplySupported: true
 
     onNotification: new_notif => {
-      // TODO: Exclude some notifs
+      // Generic per-surface filter: any active group whose IDs match this
+      // notification's `desktopEntry`, `appName`, or `app` silently expires
+      // it. The notification never reaches history, popups, or DND logic.
+      var de = (new_notif.desktopEntry || "").toLowerCase();
+      var app_name = (new_notif.appName || new_notif.app || "").toLowerCase();
+      for (var group_name in suppressed_groups) {
+        var g = suppressed_groups[group_name];
+        if (!g.enabled)
+        continue;
+        for (var i = 0; i < g.ids.length; i++) {
+          var id = g.ids[i];
+          var hit_de = de.length > 0 && de.indexOf(id) >= 0;
+          var hit_app = app_name.length > 0 && app_name.indexOf(id) >= 0;
+          if (hit_de || hit_app) {
+            new_notif.expire();
+            return;
+          }
+        }
+      }
+
       new_notif.tracked = true;
 
       let is_crit = new_notif.urgency === NotificationUrgency.Critical;

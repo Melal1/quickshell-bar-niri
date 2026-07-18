@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import "lib/calc.js" as Calc
 import "lib/fuzzy.js" as Fuzzy
+import "lib/selection.js" as Selection
 
 PillSurface {
   id: root
@@ -106,7 +107,7 @@ PillSurface {
       return;
     }
 
-    selected_index = Math.max(0, Math.min(results.length - 1, selected_index + delta));
+    selected_index = Selection.move(selected_index, delta, results.length);
     app_list.positionViewAtIndex(selected_index, ListView.Contain);
   }
 
@@ -131,7 +132,7 @@ PillSurface {
       return;
     }
 
-    if (results.length === 0 || selected_index < 0 || selected_index >= results.length) {
+    if (results.length === 0 || !Selection.valid(selected_index, results.length)) {
       return;
     }
 
@@ -175,7 +176,7 @@ PillSurface {
 
   onResultsChanged: {
     if (!calc_mode && !web_prompt_mode && selected_index >= results.length) {
-      selected_index = 0;
+      selected_index = Selection.clamp(selected_index, results.length);
     }
   }
 
@@ -244,7 +245,7 @@ PillSurface {
       font.bold: true
     }
 
-    TextField {
+    SurfaceSearchField {
       id: search_field
       anchors.left: search_icon.right
       anchors.leftMargin: 10
@@ -252,14 +253,12 @@ PillSurface {
       anchors.rightMargin: 14
       anchors.verticalCenter: parent.verticalCenter
       height: parent.height - 10
-      background: null
+      framed: false
       padding: 0
-      color: Theme.c.fg
-      selectedTextColor: Theme.c.bg
-      selectionColor: Theme.c.yellow
+      accent_color: Theme.c.yellow
       placeholderText: root.web_prompt_mode && root.web_prompt_entry ? "Query for " + root.web_prompt_entry.name : "Search apps"
-      placeholderTextColor: Theme.c.black2
-      font.family: Theme.clock_font
+      placeholder_color: Theme.c.black2
+      font_family: Theme.clock_font
       font.pixelSize: 21
 
       onTextChanged: {
@@ -276,14 +275,19 @@ PillSurface {
         app_list.contentY = 0;
       }
 
-      Keys.onUpPressed: (event) => {
-        root.move(-1);
-        event.accepted = true;
+      onMoveRequested: (delta) => root.move(delta)
+      onAcceptRequested: root.activate()
+      onEscapeRequested: {
+        if (root.web_prompt_mode) {
+          root.web_prompt_mode = false;
+          root.web_prompt_entry = null;
+          root.query = "";
+          search_field.text = "";
+        } else {
+          root.request_close();
+        }
       }
-      Keys.onDownPressed: (event) => {
-        root.move(1);
-        event.accepted = true;
-      }
+
       Keys.onPressed: (event) => {
         if (!root.calc_mode && !root.web_prompt_mode && search_field.text.length === 0 && event.text === "=") {
           root.calc_mode = true;
@@ -302,25 +306,6 @@ PillSurface {
           root.move(1);
           event.accepted = true;
         }
-      }
-      Keys.onReturnPressed: (event) => {
-        root.activate();
-        event.accepted = true;
-      }
-      Keys.onEnterPressed: (event) => {
-        root.activate();
-        event.accepted = true;
-      }
-      Keys.onEscapePressed: (event) => {
-        if (root.web_prompt_mode) {
-          root.web_prompt_mode = false;
-          root.web_prompt_entry = null;
-          root.query = "";
-          search_field.text = "";
-        } else {
-          root.request_close();
-        }
-        event.accepted = true;
       }
     }
   }
@@ -433,25 +418,17 @@ PillSurface {
         return "";
       }
 
-      Rectangle {
+      SelectableRowFrame {
+        id: app_frame
         anchors.fill: parent
-        radius: 13
-        color: app_row.selected ? Theme.c.black: "transparent"
-        border.width: app_row.selected ? 0 : (row_area.containsMouse ? 1 : 0)
-        border.color: Theme.c.black2
-
-        Behavior on color {
-          ColorAnimation { duration: Motion.fast }
-        }
-      }
-
-      MouseArea {
-        id: row_area
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onPositionChanged: (mouse) => {
-          var global = row_area.mapToItem(null, mouse.x, mouse.y);
+        selected: app_row.selected
+        selected_color: Theme.c.black
+        hover_color: "transparent"
+        frame_radius: 13
+        frame_border_width: app_row.selected ? 0 : (app_frame.hovered ? 1 : 0)
+        frame_border_color: Theme.c.black2
+        onPointerMoved: (mouse) => {
+          var global = app_frame.mapToItem(null, mouse.x, mouse.y);
           if (global.x !== root.last_pointer.x || global.y !== root.last_pointer.y) {
             root.last_pointer = Qt.point(global.x, global.y);
             root.selected_index = app_row.index;
@@ -461,62 +438,63 @@ PillSurface {
           root.selected_index = app_row.index;
           root.activate();
         }
-      }
 
-      Rectangle {
-        id: icon_bg
-        anchors.left: parent.left
-        anchors.leftMargin: 11
-        anchors.verticalCenter: parent.verticalCenter
-        width: 36
-        height: 36
-        radius: 8
-        color: app_row.selected ? Theme.c.black2 : Theme.c.black
-        opacity: app_row.selected ? 0.35 : 1
-      }
+        Rectangle {
+          id: icon_bg
+          anchors.left: parent.left
+          anchors.leftMargin: 11
+          anchors.verticalCenter: parent.verticalCenter
+          width: 36
+          height: 36
+          radius: 8
+          color: app_row.selected ? "transparent" : Theme.c.black
+          opacity: app_row.selected ? 0 : 1
+        }
 
-      Image {
-        id: app_icon
-        anchors.centerIn: icon_bg
-        width: 31
-        height: 31
-        sourceSize.width: 46
-        sourceSize.height: 46
-        fillMode: Image.PreserveAspectFit
-        asynchronous: true
-        smooth: true
-        source: app_row.entry && app_row.entry.icon ? Quickshell.iconPath(app_row.entry.icon, true) : ""
-      }
+        Image {
+          id: app_icon
+          anchors.centerIn: icon_bg
+          width: 31
+          height: 31
+          sourceSize.width: 46
+          sourceSize.height: 46
+          fillMode: Image.PreserveAspectFit
+          asynchronous: true
+          smooth: true
+          source: app_row.entry && app_row.entry.icon ? Quickshell.iconPath(app_row.entry.icon, true) : ""
+        }
 
-      Text {
-        id: app_name
-        anchors.left: icon_bg.right
-        anchors.leftMargin: 12
-        anchors.right: app_meta.left
-        anchors.rightMargin: 10
-        anchors.verticalCenter: parent.verticalCenter
-        text: app_row.entry ? app_row.entry.name : ""
-        color:  Theme.c.fg
-        font.family: Theme.clock_font
-        font.pixelSize: 21
-        font.bold: app_row.selected
-        elide: Text.ElideRight
-      }
+        Text {
+          id: app_name
+          anchors.left: icon_bg.right
+          anchors.leftMargin: 12
+          anchors.right: app_meta.left
+          anchors.rightMargin: 10
+          anchors.verticalCenter: parent.verticalCenter
+          text: app_row.entry ? app_row.entry.name : ""
+          color:  Theme.c.fg
+          font.family: Theme.clock_font
+          font.pixelSize: 21
+          font.bold: app_row.selected
+          elide: Text.ElideRight
+        }
 
-      Text {
-        id: app_meta
-        anchors.right: parent.right
-        anchors.rightMargin: 12
-        anchors.verticalCenter: parent.verticalCenter
-        width: Math.min(130, implicitWidth)
-        text: app_row.secondary
-        color: app_row.selected ?  Theme.c.fg:Theme.c.black2
-        opacity: app_row.secondary.length > 0 ? 0.85 : 0
-        font.family: Theme.clock_font
-        font.pixelSize: 16
-        font.bold: app_row.selected
-        horizontalAlignment: Text.AlignRight
-        elide: Text.ElideRight
+        Text {
+          id: app_meta
+          anchors.right: parent.right
+          anchors.rightMargin: 12
+          anchors.verticalCenter: parent.verticalCenter
+          width: Math.min(130, implicitWidth)
+          text: app_row.secondary
+          color: app_row.selected ?  Theme.c.fg:Theme.c.black2
+          opacity: app_row.secondary.length > 0 ? 0.85 : 0
+          font.family: Theme.clock_font
+          font.pixelSize: 16
+          font.bold: app_row.selected
+          horizontalAlignment: Text.AlignRight
+          elide: Text.ElideRight
+        }
+
       }
     }
   }

@@ -79,9 +79,10 @@ PillSurface {
       id: view_toggle
       anchors.centerIn: parent
       width: view_text.implicitWidth + 28
-      height: 28
+      height: 40
       radius: 14
-      color: view_area.containsMouse ? Theme.c.magenta : Theme.c.black
+      // color: view_area.containsMouse ? Theme.c.magenta : Theme.c.black
+      color:  Theme.c.magenta
       anchors.verticalCenterOffset: 1
 
       Behavior on width {
@@ -96,8 +97,9 @@ PillSurface {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: 3
         text: center.grouped_view ? "Grouped" : "All"
-        color: view_area.containsMouse ? Theme.c.bg : Theme.c.black2
-        font.pixelSize: 13
+        // color: view_area.containsMouse ? Theme.c.bg : Theme.c.black2
+        // color: Theme.c.bg
+        font.pixelSize: 16
         font.bold: true
 
         Behavior on color {

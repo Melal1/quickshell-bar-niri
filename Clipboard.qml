@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Io
+import "lib/selection.js" as Selection
 
 PillSurface {
   id: root
@@ -143,7 +144,7 @@ PillSurface {
   }
 
   function select_item(index) {
-    if (index < 0 || index >= root.results.length) return;
+    if (!Selection.valid(index, root.results.length)) return;
     selected_index = index;
     item_list.currentIndex = index;
     item_list.positionViewAtIndex(index, ListView.Contain);
@@ -151,7 +152,7 @@ PillSurface {
 
   function move_selection(delta) {
     if (root.results.length === 0) return;
-    select_item(Math.max(0, Math.min(root.results.length - 1, selected_index + delta)));
+    select_item(Selection.move(selected_index, delta, root.results.length));
   }
 
   function copy_selected() {
@@ -185,7 +186,7 @@ PillSurface {
 
   onResultsChanged: {
     if (selected_index >= results.length) {
-      selected_index = 0;
+      selected_index = Selection.clamp(selected_index, results.length);
     }
     Qt.callLater(root.request_preview);
   }
@@ -264,28 +265,17 @@ PillSurface {
       Layout.preferredHeight: 50
       spacing: 12
 
-      TextField {
+      SurfaceSearchField {
         id: search_field
         Layout.fillWidth: true
         Layout.preferredHeight: 50
-        background: Rectangle {
-          radius: 13
-          color: Theme.c.black
-          border.width: search_field.activeFocus ? 2 : 1
-          border.color: search_field.activeFocus ? root.selected_color : root.border_color
-
-          Behavior on border.color {
-            ColorAnimation { duration: Motion.fast }
-          }
-        }
+        accent_color: root.selected_color
+        border_color: root.border_color
+        placeholder_color: root.secondary_text
         leftPadding: 14
         rightPadding: 14
-        color: Theme.c.fg
-        selectedTextColor: Theme.c.bg
-        selectionColor: root.selected_color
         placeholderText: "Search clipboard history"
-        placeholderTextColor: root.secondary_text
-        font.family: root.font_family
+        font_family: root.font_family
         font.pixelSize: 23
 
         onTextChanged: {
@@ -294,14 +284,10 @@ PillSurface {
           item_list.contentY = 0;
         }
 
-        Keys.onUpPressed: (event) => {
-          root.move_selection(-1);
-          event.accepted = true;
-        }
-        Keys.onDownPressed: (event) => {
-          root.move_selection(1);
-          event.accepted = true;
-        }
+        onMoveRequested: (delta) => root.move_selection(delta)
+        onAcceptRequested: root.copy_selected()
+        onEscapeRequested: root.request_close()
+
         Keys.onPressed: (event) => {
           if ((event.modifiers & Qt.ControlModifier) && (event.key === Qt.Key_P || event.key === Qt.Key_K)) {
             root.move_selection(-1);
@@ -313,18 +299,6 @@ PillSurface {
             root.remove_selected();
             event.accepted = true;
           }
-        }
-        Keys.onReturnPressed: (event) => {
-          root.copy_selected();
-          event.accepted = true;
-        }
-        Keys.onEnterPressed: (event) => {
-          root.copy_selected();
-          event.accepted = true;
-        }
-        Keys.onEscapePressed: (event) => {
-          root.request_close();
-          event.accepted = true;
         }
       }
 
@@ -467,80 +441,73 @@ PillSurface {
             readonly property string row_title: root.title(entry)
             readonly property string row_subtitle: root.subtitle(entry)
 
-            Rectangle {
+            SelectableRowFrame {
+              id: item_frame
               anchors.fill: parent
-              radius: 13
-              color: item_row.selected ? root.selected_color : (item_area.containsMouse ? Theme.c.black : "transparent")
-              border.width: item_row.selected ? 0 : (item_area.containsMouse ? 1 : 0)
-              border.color: root.border_color
-
-              Behavior on color {
-                ColorAnimation { duration: Motion.fast }
-              }
-            }
-
-            RowLayout {
-              anchors.fill: parent
-              anchors.leftMargin: 10
-              anchors.rightMargin: 10
-              spacing: 10
-
-              Rectangle {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                radius: 10
-                color: item_row.selected ? Qt.rgba(0.05, 0.05, 0.06, 0.32) : Theme.c.black
-                border.width: item_row.selected ? 0 : 1
-                border.color: root.border_color
-
-                Text {
-                  anchors.centerIn: parent
-                  text: item_row.row_icon
-                  color: item_row.selected ? Theme.c.bg : root.secondary_text
-                  font.family: root.font_family
-                  font.pixelSize: item_row.row_icon.length > 1 ? 13 : 18
-                  font.bold: true
-                }
-              }
-
-              ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 3
-
-                Text {
-                  Layout.fillWidth: true
-                  text: item_row.row_title
-                  color: item_row.selected ? Theme.c.bg : Theme.c.fg
-                  font.family: root.font_family
-                  font.pixelSize: 17
-                  font.bold: item_row.selected
-                  maximumLineCount: 1
-                  elide: Text.ElideRight
-                  textFormat: Text.PlainText
-                }
-
-                Text {
-                  Layout.fillWidth: true
-                  text: item_row.row_subtitle
-                  color: item_row.selected ? Qt.rgba(0.06, 0.06, 0.07, 0.65) : root.secondary_text
-                  font.family: root.font_family
-                  font.pixelSize: 15
-                  font.bold: item_row.selected
-                  maximumLineCount: 1
-                  elide: Text.ElideRight
-                }
-              }
-            }
-
-            MouseArea {
-              id: item_area
-              anchors.fill: parent
-              hoverEnabled: true
-              cursorShape: Qt.PointingHandCursor
+              selected: item_row.selected
+              selected_color: root.selected_color
+              hover_color: Theme.c.black
+              frame_radius: 13
+              frame_border_width: item_row.selected ? 0 : (item_frame.hovered ? 1 : 0)
+              frame_border_color: root.border_color
+              show_selected_bar: false
               onClicked: root.select_item(item_row.index)
               onDoubleClicked: {
                 root.select_item(item_row.index);
                 root.copy_selected();
+              }
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 10
+
+                Rectangle {
+                  Layout.preferredWidth: 34
+                  Layout.preferredHeight: 34
+                  radius: 10
+                  color: item_row.selected ? Qt.rgba(0.05, 0.05, 0.06, 0.32) : Theme.c.black
+                  border.width: item_row.selected ? 0 : 1
+                  border.color: root.border_color
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: item_row.row_icon
+                    color: item_row.selected ? Theme.c.bg : root.secondary_text
+                    font.family: root.font_family
+                    font.pixelSize: item_row.row_icon.length > 1 ? 13 : 18
+                    font.bold: true
+                  }
+                }
+
+                ColumnLayout {
+                  Layout.fillWidth: true
+                  spacing: 3
+
+                  Text {
+                    Layout.fillWidth: true
+                    text: item_row.row_title
+                    color: item_row.selected ? Theme.c.bg : Theme.c.fg
+                    font.family: root.font_family
+                    font.pixelSize: 17
+                    font.bold: item_row.selected
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                  }
+
+                  Text {
+                    Layout.fillWidth: true
+                    text: item_row.row_subtitle
+                    color: item_row.selected ? Qt.rgba(0.06, 0.06, 0.07, 0.65) : root.secondary_text
+                    font.family: root.font_family
+                    font.pixelSize: 15
+                    font.bold: item_row.selected
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
+                  }
+                }
               }
             }
           }
