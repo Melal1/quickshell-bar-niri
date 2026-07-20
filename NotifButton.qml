@@ -8,12 +8,10 @@ Rectangle {
   signal leftClicked()
 
   anchors.verticalCenter: parent.verticalCenter
-  width: 47
-  height: 47
-  radius: 23
+  width: 36
+  height: 35
   // color: notif_hover.containsMouse ? Theme.c.black : "transparent"
   color:"transparent"
-  clip: true
 
   Behavior on color { ColorAnimation { duration: Motion.fast } }
 
@@ -22,7 +20,7 @@ Rectangle {
     anchors.centerIn: parent
     text:""
     color: Theme.c.fg
-    font.pixelSize: 23
+    font.pixelSize: 16
 
     SequentialAnimation {
       id: jiggle
@@ -42,7 +40,7 @@ Rectangle {
     x: inset
     y: inset - height / 2
     width: NotificationsServer.dnd ? diagonal : 0
-    height: 5
+    height: 3
     radius: 2
     color: Theme.c.red
     rotation: 45
@@ -85,13 +83,9 @@ Rectangle {
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-    onClicked: function(mouse) {
-      if (mouse.button === Qt.LeftButton)
-      root.leftClicked()
-      else {
-        NotificationsServer.dnd = !NotificationsServer.dnd
-        jiggle.restart()
-      }
+    onClicked:  {
+      NotificationsServer.dnd = !NotificationsServer.dnd
+      jiggle.restart()
     }
     acceptedButtons: Qt.LeftButton | Qt.RightButton
     // onContainsMouseChanged:{

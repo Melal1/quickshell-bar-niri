@@ -598,7 +598,7 @@ PillSurface {
       }
       Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: "NO NOTIFICATIONS"
+        text: "SILINCE"
         color: Theme.c.black2
         font.family: Theme.clock_font
         font.pixelSize: 11
@@ -883,6 +883,11 @@ PillSurface {
     anchors.top: notif_area.bottom
     anchors.topMargin: root.sep_margin
     height: root.footer_h
+    NotifButton {
+      anchors.right: parent.right
+      opacity: root.clear_holding || root.clear_draining ? 0 : 0.6
+      Behavior on opacity { NumberAnimation { duration: Motion.fast } }
+    }
 
     Text {
       anchors.centerIn: parent

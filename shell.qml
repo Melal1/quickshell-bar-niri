@@ -118,9 +118,7 @@ Scope {
     target: "pill"
     function toggle_surface(name: string): void {
       console.log("IpcHandler received name:", name);
-      if (name === "notifcenter") {
-        pill.toggle_surface(Pill.Surfaces.Link);
-      } else if (name === "launcher" || name === "\"launcher\"") {
+      if (name === "launcher" || name === "\"launcher\"") {
         console.log("Toggling launcher surface");
         pill.toggle_surface(Pill.Surfaces.Launcher);
       } else if (name === "clipboard" || name === "\"clipboard\"") {
@@ -140,6 +138,8 @@ Scope {
 
       } else if (name === "hide") {
         pill.close_surface();
+      } else if (name === "dnd") {
+        NotificationsServer.dnd = !NotificationsServer.dnd
       }
     }
   }

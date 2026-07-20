@@ -11,6 +11,7 @@ Item {
     Hover,
     Osd,
     NotifPopup,
+    InternalNotif,
     None
   }
 
@@ -92,6 +93,7 @@ Item {
       [Pill.Modes.Hover]: [Settings.hover_w, Settings.hover_h,Settings.round_rad - 20 ],
       [Pill.Modes.Osd]: [Settings.osd_w, Settings.osd_h,Settings.round_rad],
       [Pill.Modes.NotifPopup]: [Settings.popup_w, pop_loader.item ? pop_loader.item.implicitHeight + 25 : Settings.rest_h,Settings.round_rad - 20 ],
+      [Pill.Modes.InternalNotif] : [internal_notif_w,internal_notif_h,internal_notif_r],
       [Pill.Modes.None]: [0,0,0]
   })
 
@@ -117,6 +119,30 @@ Item {
   property bool brightness_available: Brightness.available
   readonly property bool expanded: (hovering && !suppress_hover) || _latched || pinned
 
+  /**
+  * Internal-notif state. `internal_notif_type` is the active
+  * InternalNotifTypes.Types value (or None). `internal_notif_w/h` flow into
+  * `active_dim` so the Pill morphs to the notif size. Calling
+  * `internal_notif(type)` overrides any active notif: it updates the type +
+  * dims and restarts the single `_internal_notif_timer`. The timer sets
+  * type back to None on expiry.
+  */
+  property int internal_notif_type: InternalNotifTypes.Types.None
+  property int internal_notif_w: 0
+  property int internal_notif_h: 0
+  property int internal_notif_r: 0
+
+  function internal_notif(type) {
+    var info = InternalNotifTypes.info_for(type)
+    console.log("[internal_notif] fired, type:", type, "w:", info.w, "h:", info.h, "duration:", info.duration)
+    internal_notif_type = type
+    internal_notif_w = info.w
+    internal_notif_h = info.h
+    internal_notif_r = info.r
+    _internal_notif_timer.interval = info.duration
+    _internal_notif_timer.restart()
+  }
+
   function show_volume_osd() {
     osd_kind = "volume"
     osd = true
@@ -139,13 +165,17 @@ Item {
 
   readonly property int mode: {
     if(is_surface) return Pill.Modes.None
+    if (internal_notif_type !== InternalNotifTypes.Types.None) return Pill.Modes.InternalNotif
     if (popup) return Pill.Modes.NotifPopup
     if (osd && !pinned) return Pill.Modes.Osd
     if (expanded) return Pill.Modes.Hover
     return Pill.Modes.Rest
   }
 
-  readonly property var active_dim: (is_surface ) ? surface_dim_for(active_surface) : modes_dim[mode]
+  readonly property var active_dim: {
+    if (is_surface) return surface_dim_for(active_surface)
+    return modes_dim[mode]
+  }
   readonly property real target_w: active_dim[0]
   readonly property real target_h: active_dim[1]
 
@@ -275,9 +305,10 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       anchors.verticalCenterOffset: -1
       anchors.left: parent.left
-      anchors.leftMargin: 37
+      anchors.leftMargin: 35
       playing: main.playing
       paused: main.paused
+      bars_n:4
       color: Audio.is_muted ? Theme.c.red2 : Theme.c.yellow
       opacity: main.hover_mode ? 0 : pill.morph_closeness
       visible: opacity > 0 && !main.hover_mode && main.media_active
@@ -362,7 +393,7 @@ Item {
       anchors.right: parent.right
       anchors.rightMargin: 25
       anchors.verticalCenter: parent.verticalCenter
-      spacing: 2
+      spacing: 15
       layoutDirection: Qt.RightToLeft
 
       opacity: main.hover_mode ? 1 : 0
@@ -387,20 +418,18 @@ Item {
         }
       }
 
-      NotifButton {
-        id: notif_btn
-        onLeftClicked: pill.toggle_surface(Pill.Surfaces.Link)
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset:3
-      }
       BatteryGlyph {
         id: battery_glyph
         show_text:true
+        text_col: Theme.c.bg
         anchors.verticalCenter: parent.verticalCenter
         visible: Battery.available
         charging:Battery.charging
         level: Battery.level
         opacity: main.hover_mode ? 1 : 0
+        body_width:42
+        body_height:26
+        border_col: Theme.c.bg
         ColorPulse {
           target_property : "fill_col"
           active: Battery.charging
@@ -408,16 +437,24 @@ Item {
           step_duration:3000
           sequence: [
           Theme.c.blue,
-          Theme.c.green
+          Theme.c.green2
           ]
         }
 
-        scale: main.hover_mode ? 1 : 0.5
         Behavior on opacity {
           NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
         }
-        Behavior on scale {
-          NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
+      }
+      GlyphIcon {
+        name:"link"
+        width: 24
+        height: width
+        anchors.verticalCenter: parent.verticalCenter
+        stroke:3
+        MouseArea {
+          onClicked: pill.toggle_surface(Pill.Surfaces.Link);
+          anchors.fill: parent
+          cursorShape: Qt.PointingHandCursor
         }
       }
     }
@@ -462,14 +499,29 @@ Item {
     onTriggered: pill.osd = false
   }
 
-  property real current_volume: Audio.volume
-  property bool current_muted: Audio.is_muted
-
-  onCurrent_volumeChanged: {
-    pill.show_volume_osd()
+  Timer {
+    id: _internal_notif_timer
+    repeat: false
+    onTriggered: pill.internal_notif_type = InternalNotifTypes.Types.None
   }
-  onCurrent_mutedChanged: {
-    pill.show_volume_osd()
+
+  Connections {
+    target: Audio
+    function onVolumeChanged() { pill.show_volume_osd() }
+    function onIs_mutedChanged() { pill.show_volume_osd() }
+  }
+
+  Connections {
+    target: NotificationsServer
+    function onDndChanged() { if(pill.mode !== Pill.Modes.Hover) pill.internal_notif(InternalNotifTypes.Types.Dnd) }
+  }
+  Connections {
+    target: Battery
+    function onChargingChanged() {
+      if (Battery.charging) {
+        pill.internal_notif(InternalNotifTypes.Types.Charging)
+      }
+    }
   }
 
   Loader {
@@ -529,6 +581,104 @@ Item {
     }
   }
 
+  // ── Internal notif (charging, etc.) — single Loader, per-type Components ──
+  Loader {
+    readonly property bool on : pill.mode === Pill.Modes.InternalNotif
+    readonly property bool is_dnd_comp : pill.internal_notif_type === InternalNotifTypes.Types.Dnd
+    readonly property bool is_charging_comp : pill.internal_notif_type === InternalNotifTypes.Types.Charging
+    id: internal_notif_loader
+    anchors.fill: parent
+    visible: opacity > 0.01
+    opacity: on ? Math.pow(pill.morph_closeness, 1.3) : 0
+    active: on
+    sourceComponent:is_charging_comp ? charging_comp : is_dnd_comp ? dnd_comp : null
+    Behavior on opacity {
+      NumberAnimation { duration: Motion.v_fast }
+    }
+
+    readonly property Component charging_comp: Component {
+      Item {
+        id: chargingRoot
+        anchors.fill: parent
+        // Animated fill level 0 → Battery.level. Duration matches the
+        // Charging notif duration in InternalNotifTypes (3000ms).
+        property real anim_level: 0
+        NumberAnimation on anim_level {
+          from: 0
+          to: Battery.level
+          duration: 800
+          running: true
+        }
+        Row {
+          anchors.right:parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.rightMargin: 20
+          spacing: 6
+          Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Math.round(Battery.level * 100) + "%"
+            color: Battery.charging ? Theme.c.green2:Theme.c.red2
+            font.family: Theme.clock_font
+            font.pixelSize: 19
+            font.bold: true
+            font.letterSpacing: 1.1
+          }
+          BatteryGlyph {
+            anchors.verticalCenter: parent.verticalCenter
+            level: anim_level
+            show_text: false
+            fill_col: Battery.charging ? Theme.c.green2 : Theme.c.red2
+            border_col:Theme.c.bg
+            body_height: 20
+
+          }
+        }
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.left: parent.left
+          anchors.leftMargin: 20
+          text:Battery.charging ? "Charging" : "Discharging"
+          color:Theme.c.fg
+          font.family: Theme.clock_font
+          font.pixelSize: 19
+          font.bold: true
+          font.letterSpacing: 1.1
+        }
+      }
+    }
+    readonly property Component dnd_comp : Component {
+      Item {
+        id: dnd_int
+        anchors.fill: parent
+        GlyphIcon {
+          name:"moon"
+          width:30
+          height:30
+          color:Theme.c.magenta
+          anchors.left:parent.left
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.leftMargin: 20
+          filled:true
+          stroke:0.9
+        }
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.right: parent.right
+          anchors.rightMargin: 20
+          text:NotificationsServer.dnd ?"on" : "off"
+          // color:NotificationsServer.dnd ?Theme.c.red2 : Theme.c.magenta
+          color:Theme.c.magenta
+          font.family: Theme.clock_font
+          font.pixelSize: 22
+          font.bold: true
+          font.letterSpacing: 1.1
+        }
+
+      }
+
+    }
+  }
+
   // Unread dot in Rest mode
   Rectangle {
     width: 10
@@ -538,7 +688,7 @@ Item {
     anchors.right: parent.right
     anchors.rightMargin: 27
     anchors.verticalCenter: parent.verticalCenter
-    visible: pill.mode === Pill.Modes.Rest && NotificationsServer.unread && !NotificationsServer.dnd > 0 && !is_surface
+    visible: pill.mode === Pill.Modes.Rest && NotificationsServer.unread && !NotificationsServer.dnd && !is_surface
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: Motion.fast } }
   }

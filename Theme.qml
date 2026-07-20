@@ -15,9 +15,9 @@ Singleton {
         ,
         "red2": "#e08398" // Bright Red
         ,
-        "green": "#658A4B" // Green
+        "green": "#7fa563" // Green
         ,
-        "green2": "#99b782" // Bright Green
+        "green2": "#79fa8f" // Bright Green
         ,
         "yellow": "#f3be7c" // Yellow
         ,

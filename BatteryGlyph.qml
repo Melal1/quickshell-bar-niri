@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Widgets
 
 Item {
   id: root
@@ -38,13 +39,13 @@ Item {
   : text_lbl.implicitWidth + gap + body.implicitWidth + tip.implicitWidth
   implicitHeight: Math.max(body.implicitHeight, text_lbl.implicitHeight)
 
-  Rectangle {
+  ClippingRectangle {
     id: body
     border.color    : Theme.c.white //
     border.width    : 2 //
     implicitWidth   : 36 //
     implicitHeight  : 24 //
-    radius          : 6 //
+    radius          : 7 //
     color           : "#434343" //
 
     Rectangle {
@@ -54,17 +55,16 @@ Item {
         top: parent.top
         left: parent.left
         bottom: parent.bottom
-        topMargin: body.border.width
-        bottomMargin: body.border.width
-        leftMargin: body.border.width
+        // topMargin: body.border.width
+        // bottomMargin: body.border.width
+        // leftMargin: body.border.width
       }
-      readonly property real w_per : level * ( parent.width - 2 )
-      width : Math.min(parent.width - body.border.width, w_per - body.border.width)
+      width : level *  parent.width
       color : Theme.c.blue //
-      Behavior on width {
-        NumberAnimation { duration:Motion.std }
-      }
-
+      // Behavior on width {
+      //   NumberAnimation { duration:Motion.std }
+      // }
+      //
     }
   }
 
@@ -104,13 +104,13 @@ Item {
   GlyphIcon {
     id: bolt
     name: "sprout"
-    color: Theme.c.white
+    color: text_lbl.color
     width:  body.implicitHeight * 0.85
     height: body.implicitHeight * 0.85
     anchors.horizontalCenter: body.horizontalCenter
     anchors.verticalCenter:  body.verticalCenter
     opacity: root._switch_to_bolt ? 1 : 0
-    stroke: root._switch_to_bolt ? 3 : 1
+    stroke: root._switch_to_bolt ? 2 : 1
     visible: opacity > 0
     Behavior on opacity {
       NumberAnimation { duration:Motion.std }

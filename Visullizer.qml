@@ -6,9 +6,11 @@ Row {
   property bool paused : false
   required property string color
   property real amp : 1
+  property alias bars_n: rep.model
   height: 16
   spacing: 3
   Repeater {
+    id:rep
     model: 4
     delegate: Rectangle {
       id: bar
