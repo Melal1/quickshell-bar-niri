@@ -16,6 +16,7 @@ Item {
   property real horizontal_margin: 0
   property bool show_selected_bar: true
   property int bar_left_margin: 2
+  property real bar_vertical_offset: 0
   readonly property bool hovered: row_area.containsMouse
 
   signal clicked(var mouse)
@@ -60,6 +61,7 @@ Item {
     anchors.left: parent.left
     anchors.leftMargin: root.bar_left_margin
     anchors.verticalCenter: parent.verticalCenter
+    anchors.verticalCenterOffset: root.bar_vertical_offset
     width: 3
     height: parent.height * 0.55
     radius: width / 2

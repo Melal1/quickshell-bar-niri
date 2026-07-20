@@ -20,8 +20,7 @@ Singleton {
   readonly property string prayer_t_path: "/.cache/salawat/athan_cache.json"
   readonly property int prayer_alert_before: 10
   readonly property int popup_w : 666
-  readonly property int notifcenter_w: 664
-  readonly property int notifcenter_h: 833
+  readonly property int link_max_h: 823
   readonly property int launcher_w: 600
   readonly property int launcher_h: 700
   readonly property int clipboard_w: 760
@@ -29,7 +28,7 @@ Singleton {
   readonly property int power_menu_h:220
   readonly property int bluetooth_w: 500
   readonly property int bluetooth_h: 560
-  readonly property int link_w: 480
+  readonly property int link_w: 550
   readonly property int network_w: 500
   readonly property int network_h: 560
   readonly property real surface_opacity: 1

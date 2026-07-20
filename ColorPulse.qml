@@ -15,6 +15,8 @@ Item {
 
   property int current_index: 0
   visible: false
+  signal pulse()
+  signal reset()
 
   function apply_current_step() {
     if (root.sequence.length === 0) return;
@@ -36,6 +38,7 @@ Item {
       if (root.active && root.sequence.length > 0) {
         root.current_index = (root.current_index + 1) % root.sequence.length;
         root.apply_current_step();
+        pulse()
         pulse_anim.start();
       }
     }
@@ -47,6 +50,7 @@ Item {
     property: root.target_property
     to: root.default_color
     duration: 500
+
   }
 
   onActiveChanged: {
@@ -60,6 +64,7 @@ Item {
     } else {
       pulse_anim.stop();
       reset_anim.start();
+      reset()
     }
   }
 

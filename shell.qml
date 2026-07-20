@@ -119,7 +119,7 @@ Scope {
     function toggle_surface(name: string): void {
       console.log("IpcHandler received name:", name);
       if (name === "notifcenter") {
-        pill.toggle_surface(Pill.Surfaces.NotifCenter);
+        pill.toggle_surface(Pill.Surfaces.Link);
       } else if (name === "launcher" || name === "\"launcher\"") {
         console.log("Toggling launcher surface");
         pill.toggle_surface(Pill.Surfaces.Launcher);

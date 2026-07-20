@@ -11,7 +11,7 @@ Singleton {
   readonly property int fast:     Math.round(140 * mult)
   readonly property int std: Math.round(300 * mult)
   readonly property int morph:    Math.round(420 * mult)
-  readonly property int slow: Math.round(500 * mult)
+  readonly property int slow: Math.round(1000 * mult)
   readonly property int shapeshift: Math.round(820 * mult)
   readonly property int glide:      Math.round(260 * mult)
   readonly property int heat:       Math.round(1100 * mult)

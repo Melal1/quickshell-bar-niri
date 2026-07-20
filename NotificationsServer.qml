@@ -4,8 +4,15 @@ import Quickshell
 import Quickshell.Services.Notifications
 
 /**
-* Any notif that will call dismiss will not be added to history, if you want to add the notif
-* to history just call expire() or use the expireTimeout attr
+* Resident notification model: every incoming notif is added to `history`
+* immediately on arrival with a live ref to the Notification object, so its
+* actions remain invokable from the inbox. `hook_closed` removes the notif
+* from history + popups when it closes (external close, app-initiated close,
+* or our own dismiss() from inbox/clear-all).
+*
+* Popups are a transient view layer on top: timeout / yellow-dot just
+* removes from the popup list (notif stays in history); red-dot calls
+* dismiss() which permanently removes it from both.
 */
 Singleton {
   id: root
@@ -69,20 +76,7 @@ Singleton {
   function hook_closed(notif) {
     notif.closed.connect(res => {
         root.popups = root.popups.filter(p => p.id !== notif.id);
-
-        if (!(res === NotificationCloseReason.Expired)) return;
-
-        root.history = [{
-          app: (notif.appName && notif.appName.length) ? notif.appName : "System",
-          summary: notif.summary,
-          body: notif.body,
-          appIcon: notif.appIcon,
-          desktopEntry: notif.desktopEntry,
-          image: icon_for(notif),
-          urgency: notif.urgency,
-          ts: Date.now(),
-          id: notif.id
-        }].concat(root.history).slice(0, 100);
+        root.history = root.history.filter(item => item.id !== notif.id);
     });
   }
 
@@ -112,27 +106,31 @@ Singleton {
   function remove_group(group) {
     if (!group || !group.preview) return;
     let targetApp = group.preview.app;
+    let to_dismiss = [];
+    for (let i = 0; i < root.history.length; i++) {
+      if (root.history[i].app === targetApp && root.history[i].notif) {
+        to_dismiss.push(root.history[i].notif);
+      }
+    }
     root.history = root.history.filter(item => item.app !== targetApp);
+    for (let i = 0; i < to_dismiss.length; i++) {
+      to_dismiss[i].dismiss();
+    }
   }
 
-  function remove_notif(notif) {
-    if (!notif || !notif.id) return;
-    root.history = root.history.filter(item => item.id !== notif.id);
+  function remove_notif(entry) {
+    if (!entry || !entry.id) return;
+    if (entry.notif) entry.notif.dismiss();
+    root.history = root.history.filter(item => item.id !== entry.id);
   }
 
   function add_popup(notif) {
-    if (root.popups.length >= 3) {
-      root.popups[0].expire();
-    }
     root.popups = root.popups.concat([notif]).slice(-3);
   }
 
   function remove_popup(notif) {
     if (!notif || !notif.id) return;
-
     root.popups = root.popups.filter(p => p.id !== notif.id);
-
-    notif.expire();
   }
 
   function mark_all_seen() {
@@ -142,9 +140,16 @@ Singleton {
   }
 
   function clear_all() {
+    let to_dismiss = [];
+    for (let i = 0; i < root.history.length; i++) {
+      if (root.history[i].notif) to_dismiss.push(root.history[i].notif);
+    }
     root.history = [];
     root.popups = [];
     root.seen_ids = ({});
+    for (let i = 0; i < to_dismiss.length; i++) {
+      to_dismiss[i].dismiss();
+    }
   }
 
   NotificationServer {
@@ -178,19 +183,27 @@ Singleton {
 
       new_notif.tracked = true;
 
+      root.history = [{
+        app: (new_notif.appName && new_notif.appName.length) ? new_notif.appName : "System",
+        summary: new_notif.summary,
+        body: new_notif.body,
+        appIcon: new_notif.appIcon,
+        desktopEntry: new_notif.desktopEntry,
+        image: icon_for(new_notif),
+        urgency: new_notif.urgency,
+        ts: Date.now(),
+        id: new_notif.id,
+        notif: new_notif,
+        actions: new_notif.actions ? new_notif.actions.filter(function(a) { return a.text.length > 0; }) : []
+      }].concat(root.history).slice(0, 100);
+
+      hook_closed(new_notif);
+
       let is_crit = new_notif.urgency === NotificationUrgency.Critical;
       let skip_popup = dnd || suppress_popups;
       if (!skip_popup || is_crit) {
-        hook_closed(new_notif);
         add_popup(new_notif);
-        return;
       }
-
-      // DND active & not critical — defer expire() so the closed signal
-      // has a chance to fire (synchronous expire() destroys the object instantly), this is my guess not the real reason
-      // I tried alot of ways and this seem to work the best
-      hook_closed(new_notif);
-      Qt.callLater(function() { new_notif.expire(); });
     }
   }
 }

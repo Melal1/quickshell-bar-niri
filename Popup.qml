@@ -10,6 +10,7 @@ Item {
   readonly property var acts: notif.actions ? notif.actions.filter(function(a) { return a.text.length > 0; }) : []
   property bool reply_mode: false
   signal close_popup()
+  signal openLink()
 
   HoverHandler {
     onHoveredChanged :{
@@ -46,9 +47,13 @@ Item {
   MouseArea {
     anchors.fill: parent
     cursorShape: Qt.PointingHandCursor
-    onClicked: {
-      if (typeof root.openCenter === "function") {
-        root.openCenter()
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked: (mouse) => {
+      if (mouse.button === Qt.RightButton) {
+        root.openLink()
+        root.clean_up(true)
+      } else {
+        root.clean_up(true)
       }
     }
   }

@@ -16,7 +16,6 @@ Item {
 
   enum Surfaces {
     None,
-    NotifCenter,
     Launcher,
     Clipboard,
     Power,
@@ -26,7 +25,6 @@ Item {
   }
 
   property int active_surface: Pill.Surfaces.None
-  readonly property bool notif_center_open: active_surface === Pill.Surfaces.NotifCenter
   readonly property bool launcher_open: active_surface === Pill.Surfaces.Launcher
   readonly property bool clipboard_open: active_surface === Pill.Surfaces.Clipboard
   readonly property bool power_open: active_surface === Pill.Surfaces.Power
@@ -34,6 +32,13 @@ Item {
   readonly property bool link_open: active_surface === Pill.Surfaces.Link
   readonly property bool network_open: active_surface === Pill.Surfaces.Network
   readonly property bool is_surface: active_surface !== Pill.Surfaces.None
+  /**
+  * True when the surface was opened while the pill was NOT pinned (hold mode
+  * off). On close, this decides whether Esc returns to rest (flag true) or
+  * stays in hover/hold mode (flag false). Set in `toggle_surface` when no
+  * surface was already up; cleared in `close_surface` only on a full close
+  * (not when returning to a parent surface).
+  */
   property bool surface_opened_from_idle: false
 
   /**
@@ -51,7 +56,7 @@ Item {
       close_surface();
     } else {
       if (!is_surface) {
-        surface_opened_from_idle = !hovering && !_latched && !pinned;
+        surface_opened_from_idle = !pinned;
         previous_surface = Pill.Surfaces.None;
       } else {
         previous_surface = active_surface;
@@ -75,7 +80,9 @@ Item {
       _grace_timer.stop();
     }
 
-    surface_opened_from_idle = false;
+    if (return_to === Pill.Surfaces.None) {
+      surface_opened_from_idle = false;
+    }
   }
 
   property bool suppress_hover: false
@@ -90,7 +97,6 @@ Item {
 
   function surface_dim_for(s) {
     if (s === Pill.Surfaces.None) return [0, 0, 0];
-    if (s === Pill.Surfaces.NotifCenter) return [Settings.notifcenter_w, Settings.notifcenter_h, Settings.round_rad - 20];
     if (s === Pill.Surfaces.Launcher) return [Settings.launcher_w, Settings.launcher_h, Settings.round_rad - 20];
     if (s === Pill.Surfaces.Clipboard) return [Settings.clipboard_w, Settings.clipboard_h, Settings.round_rad - 20];
     if (s === Pill.Surfaces.Power) return [power_loader.item ? power_loader.item.implicitWidth + 100 : 350, Settings.power_menu_h, Settings.round_rad - 20];
@@ -195,10 +201,11 @@ Item {
     radius: pill.rad
     Behavior on radius {
       NumberAnimation { duration: Motion.std}
+
     }
     duration: notif_on_surface ? 1500 : 3000
     body_color: Qt.alpha(Theme.c.bg, Settings.surface_opacity)
-    top_color:notif_on_surface? Qt.alpha(Theme.c.red2 , Settings.surface_opacity): Qt.alpha(Theme.c.black2,Settings.surface_opacity)
+    top_color:notif_on_surface? Qt.alpha(Theme.c.red2 , Settings.surface_opacity): Qt.alpha(Theme.c.bg,Settings.surface_opacity)
     bottom_color: notif_on_surface  ? Qt.alpha(Theme.c.red,Settings.surface_opacity) : Qt.alpha(Theme.c.black,Settings.surface_opacity)
 
     border_w: notif_on_surface ? 5 :hover_mode || is_surface  ? 3 : osd_mode ? 2 : 1
@@ -382,8 +389,36 @@ Item {
 
       NotifButton {
         id: notif_btn
+        onLeftClicked: pill.toggle_surface(Pill.Surfaces.Link)
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset:3
+      }
+      BatteryGlyph {
+        id: battery_glyph
+        show_text:true
+        anchors.verticalCenter: parent.verticalCenter
+        visible: Battery.available
+        charging:Battery.charging
+        level: Battery.level
+        opacity: main.hover_mode ? 1 : 0
+        ColorPulse {
+          target_property : "fill_col"
+          active: Battery.charging
+          default_color:Theme.c.blue
+          step_duration:3000
+          sequence: [
+          Theme.c.blue,
+          Theme.c.green
+          ]
+        }
 
-        onLeftClicked: pill.toggle_surface(Pill.Surfaces.NotifCenter)
+        scale: main.hover_mode ? 1 : 0.5
+        Behavior on opacity {
+          NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
+        }
+        Behavior on scale {
+          NumberAnimation { duration: Motion.fast; easing.type: Motion.std_ease }
+        }
       }
     }
   }
@@ -401,7 +436,7 @@ Item {
       value: brightness_osd ? Brightness.value : Audio.volume
       disabled: brightness_osd ? !Brightness.available : Audio.is_muted
       active_col: brightness_osd ? Theme.c.yellow : Theme.c.blue
-      muted_col: Theme.c.black2 
+      muted_col: Theme.c.black2
       icon: brightness_osd ? "☀" : Audio.is_muted ? "󰖁"
       : Audio.volume < 0.33 ? "󰕿"
       : Audio.volume < 0.66 ? "󰖀"
@@ -471,6 +506,7 @@ Item {
           pill._latched = false
           _grace_timer.stop()
         }
+        onOpenLink: pill.toggle_surface(Pill.Surfaces.Link)
       }
       Text {
         anchors {
@@ -505,12 +541,6 @@ Item {
     visible: pill.mode === Pill.Modes.Rest && NotificationsServer.unread && !NotificationsServer.dnd > 0 && !is_surface
     opacity: visible ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: Motion.fast } }
-  }
-
-  NotifCenterSurface {
-    open: notif_center_open
-    morph_closeness: pill.morph_closeness
-    onRequest_close: pill.close_surface()
   }
 
   Launcher {

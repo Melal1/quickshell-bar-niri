@@ -18,14 +18,13 @@ import QtQuick.Shapes
 Item {
   id: root
 
-  property real s: 1
   property real level: 0
   property bool on: true
   property color color: Theme.c.fg
   property color off_color: Qt.alpha(Theme.c.fg, 0.18)
 
-  implicitWidth: 18 * s
-  implicitHeight: 18 * s
+  implicitWidth: 18
+  implicitHeight: 18
 
   readonly property int lit_count: !on
     ? 0
@@ -54,21 +53,21 @@ Item {
     ShapePath {
       strokeColor: root.lit_count >= 1 ? root.color : root.off_color
       fillColor: "transparent"
-      strokeWidth: (2 / root.u) * root.s
+      strokeWidth: 2 / root.u
       capStyle: ShapePath.RoundCap
       PathSvg { path: "M9.17 13.17 A4 4 0 0 1 14.83 13.17" }
     }
     ShapePath {
       strokeColor: root.lit_count >= 2 ? root.color : root.off_color
       fillColor: "transparent"
-      strokeWidth: (2 / root.u) * root.s
+      strokeWidth: 2 / root.u
       capStyle: ShapePath.RoundCap
       PathSvg { path: "M6.34 10.34 A8 8 0 0 1 17.66 10.34" }
     }
     ShapePath {
       strokeColor: root.lit_count >= 3 ? root.color : root.off_color
       fillColor: "transparent"
-      strokeWidth: (2 / root.u) * root.s
+      strokeWidth: 2 / root.u
       capStyle: ShapePath.RoundCap
       PathSvg { path: "M3.5 7.5 A12 12 0 0 1 20.5 7.5" }
     }
@@ -94,7 +93,7 @@ Item {
     ShapePath {
       strokeColor: Qt.alpha(Theme.c.fg, 0.3)
       fillColor: "transparent"
-      strokeWidth: (1.7 / root.u) * root.s
+      strokeWidth: 1.7 / root.u
       capStyle: ShapePath.RoundCap
       PathSvg { path: "M4 3 L20 19" }
     }

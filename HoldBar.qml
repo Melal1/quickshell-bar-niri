@@ -13,7 +13,6 @@ import QtQuick
 Item {
   id: root
 
-  property real s: 1
   property real progress: 0
   property bool active: false
   property string text: ""
@@ -21,7 +20,7 @@ Item {
   property color fill_start: Qt.alpha(Theme.c.red, 0.55)
   property color fill_end: Qt.alpha(Theme.c.red2, 0.55)
 
-  implicitHeight: 24 * s
+  implicitHeight: 24
 
   opacity: active ? 1 : 0
   visible: opacity > 0
@@ -30,12 +29,12 @@ Item {
   Text {
     id: hold_text
     anchors.left: parent.left
-    anchors.leftMargin: 6 * root.s
+    anchors.leftMargin: 6
     anchors.verticalCenter: parent.verticalCenter
     text: root.text
     color: root.text_color
     font.family: Theme.clock_font
-    font.pixelSize: 13 * root.s
+    font.pixelSize: 13
     font.bold: true
 
     Behavior on color {
@@ -46,11 +45,11 @@ Item {
   Rectangle {
     id: hold_track
     anchors.left: hold_text.right
-    anchors.leftMargin: 12 * root.s
+    anchors.leftMargin: 12
     anchors.right: parent.right
-    anchors.rightMargin: 6 * root.s
+    anchors.rightMargin: 6
     anchors.verticalCenter: parent.verticalCenter
-    height: 6 * root.s
+    height: 6
     radius: height / 2
     color: Qt.alpha(Theme.c.fg, 0.13)
     clip: true
