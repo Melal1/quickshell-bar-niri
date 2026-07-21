@@ -54,29 +54,29 @@ Rectangle {
   }
 
   // Unread badge
-  Rectangle {
-    width: 18
-    height: 18
-    radius: 10
-    color: Theme.c.red
-    anchors.top: parent.top
-    anchors.right: parent.right
-    anchors {
-      rightMargin:3
-      topMargin: 3
-
-    }
-    visible: NotificationsServer.unread > 0
-
-    Text {
-      anchors.centerIn: parent
-      anchors.verticalCenterOffset: 2
-      text: NotificationsServer.unread > 9 ? "9+" : NotificationsServer.unread
-      color: Theme.c.bg
-      font.pixelSize: 12
-      font.bold: true
-    }
-  }
+  // Rectangle {
+  //   width: 18
+  //   height: 18
+  //   radius: 10
+  //   color: Theme.c.red
+  //   anchors.top: parent.top
+  //   anchors.right: parent.right
+  //   anchors {
+  //     rightMargin:3
+  //     topMargin: 3
+  //
+  //   }
+  //   visible: NotificationsServer.unread > 0
+  //
+  //   Text {
+  //     anchors.centerIn: parent
+  //     anchors.verticalCenterOffset: 2
+  //     text: NotificationsServer.unread > 9 ? "9+" : NotificationsServer.unread
+  //     color: Theme.c.bg
+  //     font.pixelSize: 12
+  //     font.bold: true
+  //   }
+  // }
 
   MouseArea {
     id: notif_hover
